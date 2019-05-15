@@ -30,7 +30,7 @@ public:
 	void copyFrom(const Field3D &source);
 
 	// Swap 2 fields.
-	static void swap(Field3D &a, Field3D &b);
+	void swapWith(Field3D &field);
 
 	// Element access.
 
@@ -66,6 +66,8 @@ private:
 	void fillWithZeros();
 
 	// Helpers.
+
+	bool areDimensionsEqual(const Field3D &field) const;
 
 	idx_t dataByteSize() const { return sizeof(num_t) * x_size * y_size * z_size; }
 

@@ -1,7 +1,10 @@
 #include "SmokeSolver.hpp"
 
 SmokeSolver::SmokeSolver(int X, int Y, int Z)
-: BaseSmokeSolver(X,Y,Z), u(X, Y+1, Z+1), v(X+1, Y, Z+1), p(X+1, Y+1, Z+1) {}
+	: BaseSmokeSolver(X,Y,Z),
+	u(X, Y+1, Z+1), v(X+1, Y, Z+1), w(X+1, Y+1, Z), p(X+1, Y+1, Z+1),
+	utmp(X, Y+1, Z+1), vtmp(X+1, Y, Z+1), wtmp(X+1, Y+1, Z)
+ 	{}
 
 void SmokeSolver::update(){
 	generateSmoke();
@@ -57,5 +60,5 @@ void SmokeSolver::addBuoyancy(){
 }
 
 void SmokeSolver::diffuse(int b){
-	num_t a = dt * kinematic_viscosity * 
+	// num_t a = dt * kinematic_viscosity * 
 }
