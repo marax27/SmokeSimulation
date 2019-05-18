@@ -4,35 +4,24 @@
 #include "SmokeSolver.hpp"
 
 int main(){
+	// Initialize solver.
 	SmokeSolver ss(30, 30, 30);
 	ss.setBuoyancy(0.3);
 	ss.setDt(0.01);
 	ss.setDx(0.15);
 	ss.setKinematicViscosity(0.001);
 
-	for(int iteration = 0; iteration < 50; ++iteration){
-		std::cout << "Step #" << iteration << std::endl;
+	const int MAX_STEPS = 20;
 
+	// Simulate.
+	for(int step = 0; step < MAX_STEPS; ++step){
 		ss.update();
 
-		if(iteration % 10 == 1){
-			std::cout << '.';
-			std::cout.flush();
-		}
+		std::cout << "\r" << (step+1) * 100 / MAX_STEPS << "%";
+		std::cout.flush();
 	}
-	std::cout << '\n';
+	std::cout << "\n";
 
-	auto rho = ss.getDensityField();
-	printf("Dimensions: %dx%dx%d\n", rho.XLast()-1, rho.YLast()-1, rho.ZLast()-1);
-
-	for(int j = 1; j < rho.YLast(); ++j){
-		for(int k = 1; k < rho.ZLast(); ++k){
-			for(int i = 1; i < rho.XLast(); ++i){
-				auto r = rho(i,j,k);
-				std::cout << r << ' ';
-			}
-			std::cout << '\n';
-		}
-		std::cout << "\n----------\n";
-	}
+	auto density_field = ss.getDensityField();
+	// Do something with density field.
 }
