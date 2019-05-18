@@ -7,4 +7,4 @@ build:
 
 .PHONY:
 clean:
-	rm test a.out *.o
+	rm -f test a.out *.o

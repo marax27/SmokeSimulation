@@ -1,4 +1,4 @@
-FLAGS=-Wall -Wextra -pedantic -std=c++17 -O1
+FLAGS=-Wall -Wextra -pedantic -std=c++17 -g
 
 TEST_DIR=Tests
 
@@ -19,5 +19,5 @@ SmokeSolver.o: SmokeSolver.cpp SmokeSolver.hpp BaseSmokeSolver.hpp
 
 .PROXY:
 clean:
-	rm sim *.o
+	rm -f sim *.o
 	make clean -C $(TEST_DIR)

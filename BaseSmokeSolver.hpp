@@ -11,7 +11,7 @@
 class BaseSmokeSolver{
 public:
 	BaseSmokeSolver(int X, int Y, int Z)
-		: smoke_density(X+1,Y+1,Z+1) {}
+		: d(X,Y,Z), dtmp(X,Y,Z) {}
 
 	void setDt(num_t dt){
 		if(dt <= 0.0)
@@ -19,10 +19,10 @@ public:
 		this->dt = dt;
 	}
 
-	void setH(num_t h){
-		if(h <= 0.0)
-			throw std::invalid_argument("Value of h must be positive.");
-		this->h = h;
+	void setDx(num_t dx){
+		if(dx <= 0.0)
+			throw std::invalid_argument("Value of dx must be positive.");
+		this->dx = dx;
 	}
 
 	void setKinematicViscosity(num_t nu){
@@ -38,13 +38,18 @@ public:
 	// Perform single simulation step.
 	virtual void update() = 0;
 
-	const Field3D& getDensityField() const { return smoke_density; }
+	const Field3D& getDensityField() const { return d; }
 
 protected:
-	Field3D smoke_density;
+	// Density of smoke.
+	Field3D d, dtmp;
 
 	// Fluid constants.
-	num_t kinematic_viscosity, density, buoyancy;
+	num_t kinematic_viscosity, fluid_density, buoyancy;
 
-	num_t dt, h;
+	// Delta-t.
+	num_t dt;
+
+	// Delta-x = Delta-y = Delta-z
+	num_t dx;
 };

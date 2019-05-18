@@ -3,7 +3,7 @@
 #include "base.hpp"
 
 // 3D grid with values assigned to each grid cell.
-class Field3D{
+class Field3D{ 
 public:
 	// Type to be used when dealing with element indexing or field dimensions.
 	typedef int idx_t;
@@ -46,9 +46,9 @@ public:
 	idx_t YSize() const { return y_size; }
 	idx_t ZSize() const { return z_size; }
 
-	idx_t LastXIndex() const { return x_size-1; }
-	idx_t LastYIndex() const { return y_size-1; }
-	idx_t LastZIndex() const { return z_size-1; }
+	idx_t XLast() const { return x_size-1; }
+	idx_t YLast() const { return y_size-1; }
+	idx_t ZLast() const { return z_size-1; }
 
 private:
 	num_t *data = nullptr;
