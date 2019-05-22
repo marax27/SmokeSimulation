@@ -28,6 +28,7 @@ class ofApp : public ofBaseApp{
 		double setParticleAlpha(double density, double highestDensity);
 
 		ofEasyCam cam;
+		ofLight light;
 		//SmokeSolver ss;
 		Particle p;
 		//double dx;

@@ -10,6 +10,7 @@ void ofApp::setup() {
 	ofSetFrameRate(4);
 	ofEnableDepthTest();
 	ofBackground(0, 0, 0);
+	light.setup();
 
 	smokeSolver.setBuoyancy(0.3);
 	smokeSolver.setDt(0.01);
@@ -31,10 +32,12 @@ void ofApp::draw() {
 	auto field = smokeSolver.getDensityField();
 	double currentHighestDensity = highestDensity;
 	double density, alpha;
+	ofEnableLighting();
 
 	cam.begin();
 	cameraControl();
-
+	light.setPosition(cam.getPosition());
+	
 	boundaryBox.draw();
 
 	for (int i = 1; i < field.XLast() - 1; ++i) {
@@ -51,6 +54,7 @@ void ofApp::draw() {
 	}
 	
 	cam.end();
+	ofDisableLighting();
 }
 
 //--------------------------------------------------------------
@@ -129,6 +133,6 @@ void ofApp::cameraControl() {
 					cameraOrbitLatitude, 
 					30, 
 					ofPoint(dx * x / 2, dx * y / 2, dx * z / 2));
-					cout << cameraOrbitLongitude * ofGetElapsedTimef() << " " << cameraOrbitLatitude << endl;
+					//cout << cameraOrbitLongitude * ofGetElapsedTimef() << " " << cameraOrbitLatitude << endl;
 	}
 }
