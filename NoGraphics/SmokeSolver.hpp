@@ -26,7 +26,7 @@ private:
 	// Use Semi-Lagrangian scheme to advect field.
 	void advect(Direction dir, Field3D &field, Field3D &field_tmp);
 
-	void diffuse(Direction dir, Field3D &field, Field3D &field_tmp);
+	void diffuse(Direction dir, Field3D &field, Field3D &field_tmp, num_t diffusion_coefficient);
 
 	void enforceBoundary(Direction dir, Field3D field);
 };
