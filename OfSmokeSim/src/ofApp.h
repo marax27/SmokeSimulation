@@ -3,6 +3,7 @@
 #include "ofMain.h"
 #include "SmokeSolver.hpp"
 #include "Particle.h"
+#include "BoundaryBox.hpp"
 
 class ofApp : public ofBaseApp{
 
@@ -23,12 +24,15 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 		
-		void drawBoundaryBox(double x, double y, double z, double dx);
+		void cameraControl();
 		double setParticleAlpha(double density, double highestDensity);
 
 		ofEasyCam cam;
 		//SmokeSolver ss;
 		Particle p;
-		double dx;
+		//double dx;
 		double highestDensity = 0;
+		bool pauseRotation = false;
+		float cameraOrbitLongitude = 10.0f;
+		float cameraOrbitLatitude = -10.0f;
 };
