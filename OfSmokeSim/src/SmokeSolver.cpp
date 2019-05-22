@@ -43,9 +43,9 @@ void SmokeSolver::velocityStep(){
 	addBuoyancy();
 
 	utmp.swapWith(u);  vtmp.swapWith(v);  wtmp.swapWith(w);
-	diffuse(Direction::X, u, utmp);
-	diffuse(Direction::Y, v, utmp);
-	diffuse(Direction::Z, w, utmp);
+	diffuse(Direction::X, u, utmp, kinematic_viscosity);
+	diffuse(Direction::Y, v, utmp, kinematic_viscosity);
+	diffuse(Direction::Z, w, utmp, kinematic_viscosity);
 	project();
 
 	utmp.swapWith(u);  vtmp.swapWith(v);  wtmp.swapWith(w);
@@ -59,7 +59,7 @@ void SmokeSolver::densityStep(){
 	// Add source.
 
 	dtmp.swapWith(d);
-	diffuse(Direction::NONE, d, dtmp);
+	diffuse(Direction::NONE, d, dtmp, 0.1);
 
 	dtmp.swapWith(d);
 	advect(Direction::NONE, d, dtmp);
@@ -171,9 +171,9 @@ void SmokeSolver::advect(SmokeSolver::Direction dir, Field3D &field, Field3D &fi
 	enforceBoundary(dir, d);
 }
 
-void SmokeSolver::diffuse(SmokeSolver::Direction dir, Field3D &field, Field3D &field_tmp){
-	num_t beta = dt * kinematic_viscosity / squared(dx);
-	for(int _=0; _<20; ++_){
+void SmokeSolver::diffuse(SmokeSolver::Direction dir, Field3D &field, Field3D &field_tmp, num_t diffusion_coefficient){
+	num_t beta = dt * diffusion_coefficient / squared(dx);
+	for(int step = 0; step < 20; ++step){
 		for(int i = 1; i < field.XLast(); ++i){
 			for(int j = 1; j < field.YLast(); ++j){
 				for(int k = 1; k < field.ZLast(); ++k){
