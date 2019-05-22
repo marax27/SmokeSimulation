@@ -87,7 +87,6 @@ void SmokeSolver::addBuoyancy(){
 
 void SmokeSolver::project(){
 
-#warning Custom implementation of divergence.
 	for(int i = 1; i < v.XLast(); ++i){
 		for(int j = 1; j < v.YLast(); ++j){
 			for(int k = 1; k < v.ZLast(); ++k){
@@ -148,9 +147,12 @@ void SmokeSolver::advect(SmokeSolver::Direction dir, Field3D &field, Field3D &fi
 				y_prev = j*dx - dt*v(i,j,k);
 				z_prev = k*dx - dt*w(i,j,k);
 
-				if(x_prev < .5)  x_prev = .5;  if(x_prev > NX*dx + .5)  x_prev = NX*dx + .5;
-				if(y_prev < .5)  y_prev = .5;  if(y_prev > NY*dx + .5)  y_prev = NY*dx + .5;
-				if(z_prev < .5)  z_prev = .5;  if(z_prev > NZ*dx + .5)  z_prev = NZ*dx + .5;
+				if(x_prev < .5)          x_prev = .5;
+				if(x_prev > NX*dx + .5)  x_prev = NX*dx + .5;
+				if(y_prev < .5)          y_prev = .5;
+				if(y_prev > NY*dx + .5)  y_prev = NY*dx + .5;
+				if(z_prev < .5)          z_prev = .5;
+				if(z_prev > NZ*dx + .5)  z_prev = NZ*dx + .5;
 
 				i0 = clamp(0, NX, int(x_prev / dx));  i1 = i0+1;
 				j0 = clamp(0, NY, int(y_prev / dx));  j1 = j0+1;
