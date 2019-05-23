@@ -2,13 +2,8 @@
 
 //--------------------------------------------------------------
 int x = 30, y = 30, z = 30;
-<<<<<<< HEAD
-int fps = 15;
-double dx = 0.5;
-=======
 int fps = 4;
 double dx = .5;
->>>>>>> 7b04e8ec4d8a53df58f4f62da00ee704906e15c3
 SmokeSolver smokeSolver(x, y, z);
 BoundaryBox boundaryBox(x * dx, y * dx, z * dx);
 
@@ -128,8 +123,10 @@ void ofApp::cameraControl() {
 					cameraOrbitLatitude, 
 					30, 
 					ofPoint(dx * x / 2, dx * y / 2, dx * z / 2));
+
+		currentCameraLongitude += cameraOrbitLongitudeDPS / fps;
 	}
-	currentCameraLongitude += cameraOrbitLongitudeDPS / fps;
+
 }
 
 void ofApp::drawSmoke(Field3D &field) {
