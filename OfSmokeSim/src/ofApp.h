@@ -26,9 +26,10 @@ class ofApp : public ofBaseApp{
 		
 		void cameraControl();
 		double setParticleAlpha(double density, double highestDensity);
-
+		void drawSmoke(Field3D &field);
 		ofEasyCam cam;
 		ofLight light;
+		ofShader shader;
 		//SmokeSolver ss;
 		Particle p;
 		//double dx;

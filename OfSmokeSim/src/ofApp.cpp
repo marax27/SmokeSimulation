@@ -9,8 +9,9 @@ BoundaryBox boundaryBox(x * dx, y * dx, z * dx);
 void ofApp::setup() {
 	ofSetFrameRate(4);
 	ofEnableDepthTest();
+	//ofEnableLighting();
 	ofBackground(0, 0, 0);
-	light.setup();
+	//light.setup();
 
 	smokeSolver.setBuoyancy(0.3);
 	smokeSolver.setDt(0.01);
@@ -18,7 +19,7 @@ void ofApp::setup() {
 	smokeSolver.setKinematicViscosity(0.001);
 
 	cam.disableMouseInput();
-
+	shader.load("smokeShader");
 	cout << "START" << endl;
 }
 
@@ -30,31 +31,22 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw() {
 	auto field = smokeSolver.getDensityField();
-	double currentHighestDensity = highestDensity;
-	double density, alpha;
-	ofEnableLighting();
-
-	cam.begin();
-	cameraControl();
-	light.setPosition(cam.getPosition());
 	
+	cam.begin();
+	//light.enable();
+
+	cameraControl();
+	//light.setPosition(cam.getPosition());
+
 	boundaryBox.draw();
 
-	for (int i = 1; i < field.XLast() - 1; ++i) {
-		for (int j = 1; j < field.YLast() - 1; ++j) {
-			for (int k = 1; k < field.ZLast() - 1; ++k) {
-				density = field(i, j, k);
-				if (density != 0) {
-					highestDensity = highestDensity < density ? density : highestDensity;
-					alpha = setParticleAlpha(density, currentHighestDensity);
-					p.draw(i, j, k, dx, alpha);
-				}
-			}
-		}
-	}
-	
+	shader.begin();
+	drawSmoke(field);
+	shader.end();
+
+	//light.disable();
 	cam.end();
-	ofDisableLighting();
+	
 }
 
 //--------------------------------------------------------------
@@ -134,5 +126,22 @@ void ofApp::cameraControl() {
 					30, 
 					ofPoint(dx * x / 2, dx * y / 2, dx * z / 2));
 					//cout << cameraOrbitLongitude * ofGetElapsedTimef() << " " << cameraOrbitLatitude << endl;
+	}
+}
+
+void ofApp::drawSmoke(Field3D &field) {
+	double currentHighestDensity = highestDensity;
+	double density, alpha;
+	for (int i = 1; i < field.XLast() - 1; ++i) {
+		for (int j = 1; j < field.YLast() - 1; ++j) {
+			for (int k = 1; k < field.ZLast() - 1; ++k) {
+				density = field(i, j, k);
+				if (density != 0) {
+					highestDensity = highestDensity < density ? density : highestDensity;
+					alpha = setParticleAlpha(density, currentHighestDensity);
+					p.draw(i, j, k, dx, alpha);
+				}
+			}
+		}
 	}
 }
