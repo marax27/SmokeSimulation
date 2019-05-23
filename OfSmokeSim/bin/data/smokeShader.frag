@@ -1,9 +1,13 @@
-#version 330
+#version 150
 
 in vec2 texCoordVarying;
 
 out vec4 outputColor;
 
+uniform float density;
+uniform float alpha;
+
 void main() {
-    outputColor = vec4(1.0, 0.0, 1.0, 0.0);
+    float color = 0.8;
+    outputColor = vec4(color, color, color, alpha);
 }

@@ -45,7 +45,7 @@ BoundaryBox::BoundaryBox(double width, double height, double depth, double x, do
 }
 
 void BoundaryBox::draw() {
-    //ofDisableLighting();
+    ofDisableLighting();
     mesh.draw();
-    //ofEnableLighting();
+    ofEnableLighting();
 }
