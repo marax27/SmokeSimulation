@@ -36,13 +36,13 @@ void SmokeSolver::generateSmoke(){
 	const int N = p.YLast();
 	const int centerY = p.YLast() / 4;
 	const int centerZ = p.ZLast() / 2;
-	float source_density = (rand()%100)/500.0f;
+	float source_density = (rand()%1000)/1000.0f;
 
 	for (int i = 1; i < d.YLast(); ++i) {
 		for (int j = 1; j < d.ZLast(); ++j) {
 			if (squared(i-centerY) + squared(j-centerZ) < squared(N/10)) {
-				d(5,i,j) += source_density;
-				u(5,i,j) = 15.0f;
+				d(5,i,j) = source_density;
+				u(5,i,j) = 12.0f;
 			}
 		}
 	}
@@ -68,7 +68,7 @@ void SmokeSolver::velocityStep(){
 
 void SmokeSolver::densityStep(){
 	dtmp.swapWith(d);
-	diffuse(Direction::NONE, d, dtmp, 0.1);
+	diffuse(Direction::NONE, d, dtmp, 1e-5);
 
 	dtmp.swapWith(d);
 	advect(Direction::NONE, d, dtmp, u, v, w);
@@ -76,7 +76,7 @@ void SmokeSolver::densityStep(){
 	for(int i = 1; i < v.XLast(); ++i){
 		for(int j = 1; j < v.YLast(); ++j){
 			for(int k = 1; k < v.ZLast(); ++k){
-				d(i,j,k) -= .000001;
+				d(i,j,k) -= .001;
 				if(d(i,j,k) < 0)
 					d(i,j,k) = 0;
 }
@@ -156,48 +156,43 @@ void SmokeSolver::project(){
 }
 
 void SmokeSolver::advect(Direction dir, Field3D &field, Field3D &field_tmp, Field3D &velX, Field3D &velY, Field3D &velZ){
-	// Based on: https://en.wikipedia.org/wiki/Trilinear_interpolation
+		int i0, j0, i1, j1, k0, k1;
+	num_t x_prev, y_prev, z_prev;
+	num_t sx0, sx1, sy0, sy1, sz0, sz1, coef0, coef1;
 
-	num3d current_pos, previous_pos;
-	idx3d idx0, idx1;
-	num3d xyz0;  //real position of a point with coordinates idx0
-	num3d dd;    //relative distances; (x_d, y_d, z_d) on Wikipedia
-	num3d dd_1;  //holds values 1-dd.x, 1-dd.y, 1-dd.z
-	num_t c0, c1, c00, c01, c10, c11;
+	const int NX = field.XSize()-2, NY = field.YSize()-2, NZ = field.ZSize()-2;
 
-	// Number of computable cells.
-	const int CCx = field.XSize() - 2, CCy = field.YSize() - 2, CCz = field.ZSize() - 2;
+	for(int i = 1; i < field.XLast(); ++i){
+		for(int j = 1; j < field.YLast(); ++j){
+			for(int k = 1; k < field.ZLast(); ++k){
+				x_prev = i*dx - dt*velX(i,j,k);
+				y_prev = j*dx - dt*velY(i,j,k);
+				z_prev = k*dx - dt*velZ(i,j,k);
 
-	FOR_EACH_COMPUTABLE_CELL(field){
-		// Trace backward position of a particle.
-		current_pos = ijk2RealPos({i,j,k});
-		previous_pos = current_pos - num3d(velX(i,j,k), velY(i,j,k), velZ(i,j,k)) * dt;
+				if(x_prev < .5)          x_prev = .5;
+				if(x_prev > NX*dx + .5)  x_prev = NX*dx + .5;
+				if(y_prev < .5)          y_prev = .5;
+				if(y_prev > NY*dx + .5)  y_prev = NY*dx + .5;
+				if(z_prev < .5)          z_prev = .5;
+				if(z_prev > NZ*dx + .5)  z_prev = NZ*dx + .5;
 
-		previous_pos = num3d(clamp(.5, .5+CCx*dx, previous_pos.x),
-		                     clamp(.5, .5+CCy*dx, previous_pos.y),
-		                     clamp(.5, .5+CCz*dx, previous_pos.z));
+				i0 = clamp(0, NX, int(x_prev / dx));  i1 = i0+1;
+				j0 = clamp(0, NY, int(y_prev / dx));  j1 = j0+1;
+				k0 = clamp(0, NZ, int(z_prev / dx));  k1 = k0+1;
 
-		idx0 = {int(previous_pos.x/dx), int(previous_pos.y/dx), int(previous_pos.z/dx)};
-		idx1 = {idx0.i + 1, idx0.j + 1, idx0.k + 1};
+				sx1 = x_prev - i0*dx;  sx0 = 1 - sx1;
+				sy1 = y_prev - j0*dx;  sy0 = 1 - sy1;
+				sz1 = z_prev - k0*dx;  sz0 = 1 - sz1;
 
-		xyz0 = ijk2RealPos(idx0);
-
-		dd = (previous_pos - xyz0) / dx;
-		dd_1 = num3d(1,1,1) - dd;
-
-		c00 = field_tmp(idx0.i, idx0.j, idx0.k)*dd_1.x + field_tmp(idx1.i, idx0.j, idx0.k)*dd.x;
-		c01 = field_tmp(idx0.i, idx0.j, idx1.k)*dd_1.x + field_tmp(idx1.i, idx0.j, idx1.k)*dd.x;
-		c10 = field_tmp(idx0.i, idx1.j, idx0.k)*dd_1.x + field_tmp(idx1.i, idx1.j, idx0.k)*dd.x;
-		c11 = field_tmp(idx0.i, idx1.j, idx1.k)*dd_1.x + field_tmp(idx1.i, idx1.j, idx1.k)*dd.x;
-
-		c0 = c00*dd_1.z + c01*dd.z;
-		c1 = c10*dd_1.z + c11*dd.z;
-
-		field(i,j,k) = c0*dd_1.y + c1*dd.y;
-	}END_FOR
-
-#warning Density?
-	enforceBoundary(dir, field);
+				coef0 = sx0 * ( sy0*field_tmp(i0,j0,k0) + sy1*field_tmp(i0,j1,k0) ) +
+				        sx1 * ( sy0*field_tmp(i1,j0,k0) + sy1*field_tmp(i1,j1,k0) );
+				coef1 = sx0 * ( sy0*field_tmp(i0,j0,k1) + sy1*field_tmp(i0,j1,k1) ) +
+				        sx1 * ( sy0*field_tmp(i1,j0,k1) + sy1*field_tmp(i1,j1,k1) );
+				field(i,j,k) = sz0*coef0 + sz1*coef1;
+			}
+		}
+	}//for
+	enforceBoundary(dir, d);
 }
 
 void SmokeSolver::diffuse(SmokeSolver::Direction dir, Field3D &field, Field3D &field_tmp, num_t diffusion_coefficient){
