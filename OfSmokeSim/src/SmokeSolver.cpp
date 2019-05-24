@@ -84,7 +84,6 @@ void SmokeSolver::densityStep(){
 	}
 }
 
-#warning Custom implementation.
 void SmokeSolver::addBuoyancy(){
 	for(int i = 1; i < v.XLast(); ++i){
 		for(int j = 1; j < v.YLast(); ++j){
