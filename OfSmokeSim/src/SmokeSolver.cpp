@@ -44,8 +44,8 @@ void SmokeSolver::velocityStep(){
 
 	utmp.swapWith(u);  vtmp.swapWith(v);  wtmp.swapWith(w);
 	diffuse(Direction::X, u, utmp, kinematic_viscosity);
-	diffuse(Direction::Y, v, utmp, kinematic_viscosity);
-	diffuse(Direction::Z, w, utmp, kinematic_viscosity);
+	diffuse(Direction::Y, v, vtmp, kinematic_viscosity);
+	diffuse(Direction::Z, w, wtmp, kinematic_viscosity);
 	project();
 
 	utmp.swapWith(u);  vtmp.swapWith(v);  wtmp.swapWith(w);
