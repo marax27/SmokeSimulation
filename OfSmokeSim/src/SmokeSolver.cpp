@@ -2,6 +2,8 @@
 
 #include "SmokeSolver.hpp"
 
+#define DENSITY_THRESHOLD 0.001
+
 #define FOR_EACH_COMPUTABLE_CELL(field)             \
 	for(int i = 1; i < field.XLast(); ++i){         \
 		for(int j = 1; j < field.YLast(); ++j){     \
@@ -89,6 +91,7 @@ void SmokeSolver::addBuoyancy(){
 		for(int j = 1; j < v.YLast(); ++j){
 			for(int k = 1; k < v.ZLast(); ++k){
 				auto dens = d(i,j,k);
+				if(dens > DENSITY_THRESHOLD)
 				v(i,j,k) += dt * (k_rise * (1.0/dens - 1.0/fluid_density) - k_fall * dens);
 			}
 		}
