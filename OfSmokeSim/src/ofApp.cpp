@@ -4,15 +4,16 @@
 int x = 30, y = 30, z = 30;
 int fps = 4;
 double dx = .5;
+
+bool saveFrames = false;
+string framesDirPath = "";
+
 SmokeSolver smokeSolver(x, y, z);
 BoundaryBox boundaryBox(x * dx, y * dx, z * dx);
 
 void ofApp::setup() {
 	ofSetFrameRate(fps);
-	//ofEnableLighting();
 	ofBackground(0, 0, 0);
-	//light.setup();
-	//glEnable(GL_DEPTH_TEST);
 
 	smokeSolver.setDt(0.01);
 	smokeSolver.setDx(dx);
@@ -22,12 +23,22 @@ void ofApp::setup() {
 
 	cam.disableMouseInput();
 	shader.load("smokeShader");
+	
+	if(saveFrames)
+		framesDirPath = createFrameDirectory();
+
+	cameraOrbitRadius = (x + y + z) / 3;
+
 	cout << "START" << endl;
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
 	smokeSolver.update();
+
+	stringstream windowTitleStream;
+	windowTitleStream << "Smoke sim\tFPS " << fixed << setprecision(2) << ofGetFrameRate();
+	ofSetWindowTitle(windowTitleStream.str());
 }
 
 //--------------------------------------------------------------
@@ -35,10 +46,8 @@ void ofApp::draw() {
 	auto field = smokeSolver.getDensityField();
 	
 	cam.begin();
-	//light.enable();
 
 	cameraControl();
-	//light.setPosition(cam.getPosition());
 
 	boundaryBox.draw();
 	
@@ -46,9 +55,11 @@ void ofApp::draw() {
 	drawSmoke(field);
 	shader.end();
 
-	//light.disable();
 	cam.end();
-	
+
+	if(!framesDirPath.empty()) {
+		ofSaveScreen(framesDirPath + "/" + "frame" + to_string(ofGetFrameNum()) + ".png");
+	}
 }
 
 //--------------------------------------------------------------
@@ -63,6 +74,10 @@ void ofApp::keyPressed(int key){
 		cameraOrbitLongitudeDPS += 10.0f;
 	if(key == 'a')
 		cameraOrbitLongitudeDPS -= 10.0f;
+	if(key == 'q')
+		cameraOrbitRadius += 5.0f;
+	if(key == 'e')
+		cameraOrbitRadius -= 5.0f;
 }
 
 //--------------------------------------------------------------
@@ -121,7 +136,7 @@ void ofApp::cameraControl() {
 	if(!pauseRotation) {
 		cam.orbitDeg(currentCameraLongitude, 
 					cameraOrbitLatitude, 
-					30, 
+					cameraOrbitRadius, 
 					ofPoint(dx * x / 2, dx * y / 2, dx * z / 2));
 
 		currentCameraLongitude += cameraOrbitLongitudeDPS / fps;
@@ -130,16 +145,28 @@ void ofApp::cameraControl() {
 }
 
 void ofApp::drawSmoke(Field3D &field) {
-	double density;
+	double density, alpha0 = 0.02f;
 	for (int i = 1; i < field.XLast() - 1; ++i) {
 		for (int j = 1; j < field.YLast() - 1; ++j) {
 			for (int k = 1; k < field.ZLast() - 1; ++k) {
 				density = field(i, j, k);
 				if (density != 0) {
-					shader.setUniform1f("alpha", density);
+					density = density >= 1 ? 1.0f : density;
+					shader.setUniform1f("alpha", alpha0 + (1 - alpha0) * density);
 					ofDrawBox(i * dx, j * dx, k * dx, dx); // draw smoke particle
-				}
+				} 
 			}
 		}
+	}
+}
+
+string ofApp::createFrameDirectory() {
+	string path = "screenshots" + to_string(ofGetHours()) + to_string(ofGetMinutes()) + to_string(ofGetSeconds());
+	if(!ofDirectory::doesDirectoryExist(path)) {
+		ofDirectory::createDirectory(path);
+		return path;
+	} else {
+		cerr << "Directory " + path + " already exists" << endl;
+		return "";
 	}
 }

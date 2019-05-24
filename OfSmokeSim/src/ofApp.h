@@ -4,6 +4,16 @@
 #include "SmokeSolver.hpp"
 #include "BoundaryBox.hpp"
 
+/*
+	To create a mp4 file from screenshots: 
+		- change saveFrames to true
+		- ffmpeg -framerate x -start_number 0 -i path/to/frames/frame%d.png path/to/vid/videoName.mp4
+
+	Camera rotation speed: 'a' to accelerate towards left, 'd' to accelerate towards right by 10 degrees per second
+	Camera vertical movement: 'w' to move the camera up by 10 degrees, 's' to move the camera down by 10 degrees
+	Camera proximity: 'q' to move the camera farther from the box, 'e' to move the camera closer to the box
+	Camera pause: 'p' to pause camera 
+*/
 class ofApp : public ofBaseApp{
 
 	public:
@@ -25,12 +35,13 @@ class ofApp : public ofBaseApp{
 		
 		void cameraControl();
 		void drawSmoke(Field3D &field);
+		string createFrameDirectory();
 
 		ofEasyCam cam;
-		//ofLight light;
 		ofShader shader;
 		bool pauseRotation = false;
 		float cameraOrbitLongitudeDPS = 30.0f;
 		float cameraOrbitLatitude = -10.0f;
+		float cameraOrbitRadius;
 		float currentCameraLongitude = 0.0f;
 };
