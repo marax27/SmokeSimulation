@@ -1,6 +1,17 @@
+#include <iostream>
+
 #include "SmokeSolver.hpp"
 
-#include <iostream>
+#define DENSITY_THRESHOLD 0.001
+
+#define FOR_EACH_COMPUTABLE_CELL(field)             \
+	for(int i = 1; i < field.XLast(); ++i){         \
+		for(int j = 1; j < field.YLast(); ++j){     \
+			for(int k = 1; k < field.ZLast(); ++k)
+
+#define END_FOR }}
+
+
 
 SmokeSolver::SmokeSolver(int X, int Y, int Z)
 	// Collocated
@@ -25,22 +36,22 @@ void SmokeSolver::generateSmoke(){
 	const int N = p.YLast();
 	const int centerY = p.YLast() / 4;
 	const int centerZ = p.ZLast() / 2;
-	float dens = (rand()%1000)/1000.0f;
+	float source_density = (rand()%1000)/1000.0f;
 
 	for (int i = 1; i < d.YLast(); ++i) {
 		for (int j = 1; j < d.ZLast(); ++j) {
 			if (squared(i-centerY) + squared(j-centerZ) < squared(N/10)) {
-				d(5,i,j) = dens;
-				u(5,i,j) = 2.0f;
+				d(5,i,j) = source_density;
+				u(5,i,j) = 12.0f;
 			}
 		}
 	}
 }
 
 void SmokeSolver::velocityStep(){
-	// Add sources.
-
 	addBuoyancy();
+#warning Wind disabled.
+	// addWind();
 
 	utmp.swapWith(u);  vtmp.swapWith(v);  wtmp.swapWith(w);
 	diffuse(Direction::X, u, utmp, kinematic_viscosity);
@@ -49,20 +60,18 @@ void SmokeSolver::velocityStep(){
 	project();
 
 	utmp.swapWith(u);  vtmp.swapWith(v);  wtmp.swapWith(w);
-	advect(Direction::X, u, utmp);
-	advect(Direction::Y, v, vtmp);
-	advect(Direction::Z, w, wtmp);
+	advect(Direction::X, u, utmp, utmp, vtmp, wtmp);
+	advect(Direction::Y, v, vtmp, utmp, vtmp, wtmp);
+	advect(Direction::Z, w, wtmp, utmp, vtmp, wtmp);
 	project();
 }
 
 void SmokeSolver::densityStep(){
-	// Add source.
+	dtmp.swapWith(d);
+	diffuse(Direction::NONE, d, dtmp, 1e-5);
 
 	dtmp.swapWith(d);
-	diffuse(Direction::NONE, d, dtmp, 0.1);
-
-	dtmp.swapWith(d);
-	advect(Direction::NONE, d, dtmp);
+	advect(Direction::NONE, d, dtmp, u, v, w);
 
 	for(int i = 1; i < v.XLast(); ++i){
 		for(int j = 1; j < v.YLast(); ++j){
@@ -70,7 +79,7 @@ void SmokeSolver::densityStep(){
 				d(i,j,k) -= .001;
 				if(d(i,j,k) < 0)
 					d(i,j,k) = 0;
-			}
+}
 		}
 	}
 }
@@ -79,10 +88,23 @@ void SmokeSolver::addBuoyancy(){
 	for(int i = 1; i < v.XLast(); ++i){
 		for(int j = 1; j < v.YLast(); ++j){
 			for(int k = 1; k < v.ZLast(); ++k){
-				v(i,j,k) += d(i,j,k) * k_rise * dt;
+				auto dens = d(i,j,k);
+				if(dens > DENSITY_THRESHOLD)
+				v(i,j,k) += dt * (k_rise * (1.0/dens - 1.0/fluid_density) - k_fall * dens);
 			}
 		}
 	}
+}
+
+void SmokeSolver::addWind(){
+	const num_t coef = 0.75 * dt;
+	FOR_EACH_COMPUTABLE_CELL(u){  //assumption: dim u = dim v = dim w
+		u(i,j,k) *= 1 - coef;
+		v(i,j,k) *= 1 - coef;
+		
+		w(i,j,k) *= 1 - coef;
+		w(i,j,k) += coef * 10;
+	}END_FOR
 }
 
 void SmokeSolver::project(){
@@ -91,10 +113,10 @@ void SmokeSolver::project(){
 		for(int j = 1; j < v.YLast(); ++j){
 			for(int k = 1; k < v.ZLast(); ++k){
 				diverg(i,j,k) = -dx/3 * (
-					u(i+1,j,k) - u(i-1,j,k) +
-					v(i,j+1,k) - v(i,j-1,k) +
-					w(i,j,k+1) - w(i,j,k-1)
-				);
+			u(i+1,j,k) - u(i-1,j,k) +
+			v(i,j+1,k) - v(i,j-1,k) +
+			w(i,j,k+1) - w(i,j,k-1)
+		);
 				p(i,j,k) = 0;
 			}
 		}
@@ -108,9 +130,9 @@ void SmokeSolver::project(){
 			for(int j = 1; j < v.YSize(); ++j){
 				for(int k = 1; k < v.ZSize(); ++k){
 					p(i,j,k) = (diverg(i,j,k) +
-						p(i-1,j,k) + p(i+1,j,k) +
-						p(i,j-1,k) + p(i,j+1,k) +
-						p(i,j,k-1) + p(i,j,k+1)
+				p(i-1,j,k) + p(i+1,j,k) +
+				p(i,j-1,k) + p(i,j+1,k) +
+				p(i,j,k-1) + p(i,j,k+1)
 					) / 6;
 				}
 			}
@@ -130,11 +152,10 @@ void SmokeSolver::project(){
 	}
 	enforceBoundary(Direction::X, u);
 	enforceBoundary(Direction::Y, v);
-
 }
 
-void SmokeSolver::advect(SmokeSolver::Direction dir, Field3D &field, Field3D &field_tmp){
-	int i0, j0, i1, j1, k0, k1;
+void SmokeSolver::advect(Direction dir, Field3D &field, Field3D &field_tmp, Field3D &velX, Field3D &velY, Field3D &velZ){
+		int i0, j0, i1, j1, k0, k1;
 	num_t x_prev, y_prev, z_prev;
 	num_t sx0, sx1, sy0, sy1, sz0, sz1, coef0, coef1;
 
@@ -143,9 +164,9 @@ void SmokeSolver::advect(SmokeSolver::Direction dir, Field3D &field, Field3D &fi
 	for(int i = 1; i < field.XLast(); ++i){
 		for(int j = 1; j < field.YLast(); ++j){
 			for(int k = 1; k < field.ZLast(); ++k){
-				x_prev = i*dx - dt*u(i,j,k);
-				y_prev = j*dx - dt*v(i,j,k);
-				z_prev = k*dx - dt*w(i,j,k);
+				x_prev = i*dx - dt*velX(i,j,k);
+				y_prev = j*dx - dt*velY(i,j,k);
+				z_prev = k*dx - dt*velZ(i,j,k);
 
 				if(x_prev < .5)          x_prev = .5;
 				if(x_prev > NX*dx + .5)  x_prev = NX*dx + .5;
@@ -174,22 +195,19 @@ void SmokeSolver::advect(SmokeSolver::Direction dir, Field3D &field, Field3D &fi
 }
 
 void SmokeSolver::diffuse(SmokeSolver::Direction dir, Field3D &field, Field3D &field_tmp, num_t diffusion_coefficient){
-	num_t beta = dt * diffusion_coefficient / squared(dx);
-	for(int step = 0; step < 20; ++step){
-		for(int i = 1; i < field.XLast(); ++i){
-			for(int j = 1; j < field.YLast(); ++j){
-				for(int k = 1; k < field.ZLast(); ++k){
-					field(i,j,k) = (field_tmp(i,j,k) + beta*(
-						field(i-1,j,k) + field(i+1,j,k) +
-						field(i,j-1,k) + field(i,j+1,k) +
-						field(i,j,k-1) + field(i,j,k+1)
-					)) / (1 + 6*beta);
-				}
-			}
-		}//for each cell
+	const num_t coef = diffusion_coefficient * dt / squared(dx);
 
-		enforceBoundary(dir, field);
+	for(int step = 0; step < 20; ++step){
+		FOR_EACH_COMPUTABLE_CELL(field){
+			field(i,j,k) = (field_tmp(i,j,k) + coef*(
+				field(i-1,j,k) + field(i+1,j,k) +
+				field(i,j-1,k) + field(i,j+1,k) +
+				field(i,j,k-1) + field(i,j,k+1)
+			)) / (1 + 6*coef);
+		}END_FOR;
 	}
+
+	enforceBoundary(dir, field);
 }
 
 void SmokeSolver::enforceBoundary(SmokeSolver::Direction dir, Field3D field){
@@ -223,3 +241,8 @@ void SmokeSolver::enforceBoundary(SmokeSolver::Direction dir, Field3D field){
 	field(-1,0,-1)  = (field(-2,0,-1)  + field(-1,1,-1)  + field(-1,0,-2))  / 3;
 	field(-1,-1,-1) = (field(-2,-1,-1) + field(-1,-2,-1) + field(-1,-1,-2)) / 3;
 }
+
+num3d SmokeSolver::ijk2RealPos(idx3d pos) const{
+	return num3d(pos.i,pos.j,pos.k) * dx;
+}
+
