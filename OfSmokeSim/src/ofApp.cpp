@@ -15,11 +15,11 @@ void ofApp::setup() {
 	ofSetFrameRate(fps);
 	ofBackground(0, 0, 0);
 
-	smokeSolver.setDt(0.01);
+	smokeSolver.setDt(0.1);
 	smokeSolver.setDx(dx);
-	smokeSolver.setKinematicViscosity(0.001);
-	smokeSolver.setFallCoefficient(0.05);
-	smokeSolver.setRiseCoefficient(0.3);
+	smokeSolver.setKinematicViscosity(1e-5);
+	smokeSolver.setFallCoefficient(0.004);
+	smokeSolver.setRiseCoefficient(0.01);
 	smokeSolver.setFluidDensity(1);
 
 	cam.disableMouseInput();
