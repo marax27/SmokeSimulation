@@ -32,5 +32,12 @@ struct num3d{
 		return *this;
 	}
 
+	bool operator==(const num3d &right) const {
+		return x == right.x && y == right.y && z == right.z;
+	}
+	bool operator!=(const num3d &right) const {
+		return !(*this == right);
+	}
+
 	num_t x, y, z;
 };
