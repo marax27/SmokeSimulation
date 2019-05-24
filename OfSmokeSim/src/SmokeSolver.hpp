@@ -20,6 +20,7 @@ private:
 	void densityStep();
 
 	void addBuoyancy();
+	void addWind();
 	void project();
 
 	enum Direction{ NONE, X, Y, Z };
