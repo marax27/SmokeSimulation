@@ -2,8 +2,6 @@
 
 #include "SmokeSolver.hpp"
 
-#define DENSITY_THRESHOLD 0.001
-
 #define FOR_EACH_COMPUTABLE_CELL(field)             \
 	for(int i = 1; i < field.XLast(); ++i){         \
 		for(int j = 1; j < field.YLast(); ++j){     \
@@ -36,7 +34,7 @@ void SmokeSolver::generateSmoke(){
 	const int N = p.YLast();
 	const int centerY = p.YLast() / 4;
 	const int centerZ = p.ZLast() / 2;
-	float source_density = (rand()%1000)/1000.0f;
+	float source_density = 2;//(rand()%1000)/1000.0f;
 
 	for (int i = 1; i < d.YLast(); ++i) {
 		for (int j = 1; j < d.ZLast(); ++j) {
@@ -68,7 +66,7 @@ void SmokeSolver::velocityStep(){
 
 void SmokeSolver::densityStep(){
 	dtmp.swapWith(d);
-	diffuse(Direction::NONE, d, dtmp, 1e-5);
+	diffuse(Direction::NONE, d, dtmp, smoke_diffusion_coefficient);
 
 	dtmp.swapWith(d);
 	advect(Direction::NONE, d, dtmp, u, v, w);
@@ -89,7 +87,7 @@ void SmokeSolver::addBuoyancy(){
 		for(int j = 1; j < v.YLast(); ++j){
 			for(int k = 1; k < v.ZLast(); ++k){
 				auto dens = d(i,j,k);
-				if(dens > DENSITY_THRESHOLD)
+				if(dens > density_threshold)
 				v(i,j,k) += dt * (k_rise * (1.0/dens - 1.0/fluid_density) - k_fall * dens);
 			}
 		}
