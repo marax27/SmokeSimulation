@@ -4,7 +4,6 @@ in vec2 texCoordVarying;
 
 out vec4 outputColor;
 
-uniform float density;
 uniform float alpha;
 
 void main() {

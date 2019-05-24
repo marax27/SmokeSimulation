@@ -27,12 +27,10 @@ class ofApp : public ofBaseApp{
 		void drawSmoke(Field3D &field);
 
 		ofEasyCam cam;
-		ofLight light;
+		//ofLight light;
 		ofShader shader;
-		//SmokeSolver ss;
-		//double dx;
-		double highestDensity = 0;
 		bool pauseRotation = false;
-		float cameraOrbitLongitude = 10.0f;
+		float cameraOrbitLongitudeDPS = 30.0f;
 		float cameraOrbitLatitude = -10.0f;
+		float currentCameraLongitude = 0.0f;
 };
