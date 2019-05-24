@@ -3,7 +3,7 @@
 //--------------------------------------------------------------
 int x = 30, y = 30, z = 30;
 int fps = 4;
-double dx = 0.5;
+double dx = .5;
 SmokeSolver smokeSolver(x, y, z);
 BoundaryBox boundaryBox(x * dx, y * dx, z * dx);
 
@@ -14,10 +14,11 @@ void ofApp::setup() {
 	ofBackground(0, 0, 0);
 	light.setup();
 
-	smokeSolver.setBuoyancy(0.3);
 	smokeSolver.setDt(0.01);
 	smokeSolver.setDx(dx);
 	smokeSolver.setKinematicViscosity(0.001);
+	smokeSolver.setFallCoefficient(0.05);
+	smokeSolver.setRiseCoefficient(0.3);
 
 	cam.disableMouseInput();
 	shader.load("smokeShader");

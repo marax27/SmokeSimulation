@@ -79,7 +79,7 @@ void SmokeSolver::addBuoyancy(){
 	for(int i = 1; i < v.XLast(); ++i){
 		for(int j = 1; j < v.YLast(); ++j){
 			for(int k = 1; k < v.ZLast(); ++k){
-				v(i,j,k) += d(i,j,k) * buoyancy * dt;
+				v(i,j,k) += d(i,j,k) * k_rise * dt;
 			}
 		}
 	}
