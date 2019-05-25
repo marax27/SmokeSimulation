@@ -100,19 +100,20 @@ void SmokeSolver::addWind(){
 void SmokeSolver::project(){
 
 	FOR_EACH_COMPUTABLE_CELL(diverg){
-		diverg(i,j,k) = -dx/3 * (
+		diverg(i,j,k) = (
 			u(i+1,j,k) - u(i-1,j,k) +
 			v(i,j+1,k) - v(i,j-1,k) +
 			w(i,j,k+1) - w(i,j,k-1)
-		);
+		) * .5/dx;
 		p(i,j,k) = 0;
 	}END_FOR
 	enforceBoundary(Direction::NONE, diverg);
 	enforceBoundary(Direction::NONE, p);
 
+	const num_t div_coef = -fluid_density * squared(dx) / dt;
 	for(int step = 0; step < 20; ++step){
 		FOR_EACH_COMPUTABLE_CELL(p){
-			p(i,j,k) = (diverg(i,j,k) +
+			p(i,j,k) = (div_coef * diverg(i,j,k) +
 				p(i-1,j,k) + p(i+1,j,k) +
 				p(i,j-1,k) + p(i,j+1,k) +
 				p(i,j,k-1) + p(i,j,k+1)
@@ -121,14 +122,15 @@ void SmokeSolver::project(){
 		enforceBoundary(Direction::NONE, p);
 	}
 
-
+	const num_t vel_coef = .5/dx * dt/fluid_density;
 	FOR_EACH_COMPUTABLE_CELL(u){
-		u(i,j,k) -= (p(i+1,j,k) - p(i-1,j,k)) /3/dx;
-		v(i,j,k) -= (p(i,j+1,k) - p(i,j-1,k)) /3/dx;
-		w(i,j,k) -= (p(i,j,k+1) - p(i,j,k-1)) /3/dx;
+		u(i,j,k) -= (p(i+1,j,k) - p(i-1,j,k)) * vel_coef;
+		v(i,j,k) -= (p(i,j+1,k) - p(i,j-1,k)) * vel_coef;
+		w(i,j,k) -= (p(i,j,k+1) - p(i,j,k-1)) * vel_coef;
 	}END_FOR
 	enforceBoundary(Direction::X, u);
 	enforceBoundary(Direction::Y, v);
+	enforceBoundary(Direction::Z, w);  //it wasn't here in original source code
 }
 
 void SmokeSolver::advect(Direction dir, Field3D &field, Field3D &field_tmp, Field3D &velX, Field3D &velY, Field3D &velZ){
