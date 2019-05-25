@@ -34,7 +34,7 @@ void SmokeSolver::generateSmoke(){
 	const int N = p.YLast();
 	const int centerY = p.YLast() / 4;
 	const int centerZ = p.ZLast() / 2;
-	float source_density = 2;//(rand()%1000)/1000.0f;
+	float source_density = (rand()%1000)/1000.0f;
 
 	for (int i = 1; i < d.YLast(); ++i) {
 		for (int j = 1; j < d.ZLast(); ++j) {
@@ -71,27 +71,19 @@ void SmokeSolver::densityStep(){
 	dtmp.swapWith(d);
 	advect(Direction::NONE, d, dtmp, u, v, w);
 
-	for(int i = 1; i < v.XLast(); ++i){
-		for(int j = 1; j < v.YLast(); ++j){
-			for(int k = 1; k < v.ZLast(); ++k){
-				d(i,j,k) -= .001;
-				if(d(i,j,k) < 0)
-					d(i,j,k) = 0;
-}
-		}
-	}
+	FOR_EACH_COMPUTABLE_CELL(d){
+		d(i,j,k) -= .001;
+		if(d(i,j,k) < 0)
+			d(i,j,k) = 0;
+	}END_FOR
 }
 
 void SmokeSolver::addBuoyancy(){
-	for(int i = 1; i < v.XLast(); ++i){
-		for(int j = 1; j < v.YLast(); ++j){
-			for(int k = 1; k < v.ZLast(); ++k){
-				auto dens = d(i,j,k);
-				if(dens > density_threshold)
-				v(i,j,k) += dt * (k_rise * (1.0/dens - 1.0/fluid_density) - k_fall * dens);
-			}
-		}
-	}
+	FOR_EACH_COMPUTABLE_CELL(v){
+		auto dens = d(i,j,k);
+		if(dens > density_threshold)
+			v(i,j,k) += dt * (k_rise * (1.0/dens - 1.0/fluid_density) - k_fall * dens);
+	}END_FOR
 }
 
 void SmokeSolver::addWind(){
@@ -107,88 +99,71 @@ void SmokeSolver::addWind(){
 
 void SmokeSolver::project(){
 
-	for(int i = 1; i < v.XLast(); ++i){
-		for(int j = 1; j < v.YLast(); ++j){
-			for(int k = 1; k < v.ZLast(); ++k){
-				diverg(i,j,k) = -dx/3 * (
+	FOR_EACH_COMPUTABLE_CELL(diverg){
+		diverg(i,j,k) = -dx/3 * (
 			u(i+1,j,k) - u(i-1,j,k) +
 			v(i,j+1,k) - v(i,j-1,k) +
 			w(i,j,k+1) - w(i,j,k-1)
 		);
-				p(i,j,k) = 0;
-			}
-		}
-	}
-
+		p(i,j,k) = 0;
+	}END_FOR
 	enforceBoundary(Direction::NONE, diverg);
 	enforceBoundary(Direction::NONE, p);
 
-	for(int _ = 0; _ < 20; ++_){
-		for(int i = 1; i < v.XSize(); ++i){
-			for(int j = 1; j < v.YSize(); ++j){
-				for(int k = 1; k < v.ZSize(); ++k){
-					p(i,j,k) = (diverg(i,j,k) +
+	for(int step = 0; step < 20; ++step){
+		FOR_EACH_COMPUTABLE_CELL(p){
+			p(i,j,k) = (diverg(i,j,k) +
 				p(i-1,j,k) + p(i+1,j,k) +
 				p(i,j-1,k) + p(i,j+1,k) +
 				p(i,j,k-1) + p(i,j,k+1)
-					) / 6;
-				}
-			}
-		}
+			) / 6;
+		}END_FOR
 		enforceBoundary(Direction::NONE, p);
 	}
 
 
-	for(int i = 1; i < v.XLast(); ++i){
-		for(int j = 1; j < v.YLast(); ++j){
-			for(int k = 1; k < v.ZLast(); ++k){
-				u(i,j,k) -= (p(i+1,j,k) - p(i-1,j,k)) / 3/dx;
-				v(i,j,k) -= (p(i,j+1,k) - p(i,j-1,k)) / 3/dx;
-				w(i,j,k) -= (p(i,j,k+1) - p(i,j,k-1)) / 3/dx;
-			}
-		}
-	}
+	FOR_EACH_COMPUTABLE_CELL(u){
+		u(i,j,k) -= (p(i+1,j,k) - p(i-1,j,k)) /3/dx;
+		v(i,j,k) -= (p(i,j+1,k) - p(i,j-1,k)) /3/dx;
+		w(i,j,k) -= (p(i,j,k+1) - p(i,j,k-1)) /3/dx;
+	}END_FOR
 	enforceBoundary(Direction::X, u);
 	enforceBoundary(Direction::Y, v);
 }
 
 void SmokeSolver::advect(Direction dir, Field3D &field, Field3D &field_tmp, Field3D &velX, Field3D &velY, Field3D &velZ){
-		int i0, j0, i1, j1, k0, k1;
+	int i0, j0, i1, j1, k0, k1;
 	num_t x_prev, y_prev, z_prev;
 	num_t sx0, sx1, sy0, sy1, sz0, sz1, coef0, coef1;
 
 	const int NX = field.XSize()-2, NY = field.YSize()-2, NZ = field.ZSize()-2;
 
-	for(int i = 1; i < field.XLast(); ++i){
-		for(int j = 1; j < field.YLast(); ++j){
-			for(int k = 1; k < field.ZLast(); ++k){
-				x_prev = i*dx - dt*velX(i,j,k);
-				y_prev = j*dx - dt*velY(i,j,k);
-				z_prev = k*dx - dt*velZ(i,j,k);
+	FOR_EACH_COMPUTABLE_CELL(field){
+		x_prev = i*dx - dt*velX(i,j,k);
+		y_prev = j*dx - dt*velY(i,j,k);
+		z_prev = k*dx - dt*velZ(i,j,k);
 
-				if(x_prev < .5)          x_prev = .5;
-				if(x_prev > NX*dx + .5)  x_prev = NX*dx + .5;
-				if(y_prev < .5)          y_prev = .5;
-				if(y_prev > NY*dx + .5)  y_prev = NY*dx + .5;
-				if(z_prev < .5)          z_prev = .5;
-				if(z_prev > NZ*dx + .5)  z_prev = NZ*dx + .5;
+		if(x_prev < .5)          x_prev = .5;
+		if(x_prev > NX*dx + .5)  x_prev = NX*dx + .5;
+		if(y_prev < .5)          y_prev = .5;
+		if(y_prev > NY*dx + .5)  y_prev = NY*dx + .5;
+		if(z_prev < .5)          z_prev = .5;
+		if(z_prev > NZ*dx + .5)  z_prev = NZ*dx + .5;
 
-				i0 = clamp(0, NX, int(x_prev / dx));  i1 = i0+1;
-				j0 = clamp(0, NY, int(y_prev / dx));  j1 = j0+1;
-				k0 = clamp(0, NZ, int(z_prev / dx));  k1 = k0+1;
+		i0 = clamp(0, NX, int(x_prev / dx));  i1 = i0+1;
+		j0 = clamp(0, NY, int(y_prev / dx));  j1 = j0+1;
+		k0 = clamp(0, NZ, int(z_prev / dx));  k1 = k0+1;
 
-				sx1 = x_prev - i0*dx;  sx0 = 1 - sx1;
-				sy1 = y_prev - j0*dx;  sy0 = 1 - sy1;
-				sz1 = z_prev - k0*dx;  sz0 = 1 - sz1;
+		sx1 = x_prev - i0*dx;  sx0 = 1 - sx1;
+		sy1 = y_prev - j0*dx;  sy0 = 1 - sy1;
+		sz1 = z_prev - k0*dx;  sz0 = 1 - sz1;
 
-				coef0 = sx0 * ( sy0*field_tmp(i0,j0,k0) + sy1*field_tmp(i0,j1,k0) ) +
-				        sx1 * ( sy0*field_tmp(i1,j0,k0) + sy1*field_tmp(i1,j1,k0) );
-				coef1 = sx0 * ( sy0*field_tmp(i0,j0,k1) + sy1*field_tmp(i0,j1,k1) ) +
-				        sx1 * ( sy0*field_tmp(i1,j0,k1) + sy1*field_tmp(i1,j1,k1) );
-				field(i,j,k) = sz0*coef0 + sz1*coef1;
-			}
-		}
-	}//for
+		coef0 = sx0 * ( sy0*field_tmp(i0,j0,k0) + sy1*field_tmp(i0,j1,k0) ) +
+		        sx1 * ( sy0*field_tmp(i1,j0,k0) + sy1*field_tmp(i1,j1,k0) );
+		coef1 = sx0 * ( sy0*field_tmp(i0,j0,k1) + sy1*field_tmp(i0,j1,k1) ) +
+		        sx1 * ( sy0*field_tmp(i1,j0,k1) + sy1*field_tmp(i1,j1,k1) );
+		field(i,j,k) = sz0*coef0 + sz1*coef1;
+	}END_FOR
 	enforceBoundary(dir, d);
 }
 
