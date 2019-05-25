@@ -9,10 +9,14 @@ public:
 
 	void update();
 
+	num_t getThresholdDt(bool fedkiw_relaxation = false) const;
+
 private:
 	Field3D u, v, w, p;
 	Field3D utmp, vtmp, wtmp;
 	Field3D diverg;
+
+	num_t max_squared_speed;
 
 	void generateSmoke();
 

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 
 #include "SmokeSolver.hpp"
 
@@ -23,12 +24,23 @@ SmokeSolver::SmokeSolver(int X, int Y, int Z)
 	   utmp(X, Y+1, Z+1), vtmp(X+1, Y, Z+1), wtmp(X+1, Y+1, Z) */
  	{}
 
+//************************************************************
+
 void SmokeSolver::update(){
 	generateSmoke();
 
 	velocityStep();
 	densityStep();
 }
+
+num_t SmokeSolver::getThresholdDt(bool fedkiw_relaxation) const {
+	// Use (relaxed or not) CFL condition to get maximum stable delta-t.
+	// Do not use at the very beginning of the simulation, when
+	// max_squared_speed is uninitialized.
+	return (fedkiw_relaxation ? 5 : 1) * dx / sqrt(max_squared_speed);
+}
+
+//************************************************************
 
 void SmokeSolver::generateSmoke(){
 	const int N = p.YLast();
@@ -122,11 +134,20 @@ void SmokeSolver::project(){
 		enforceBoundary(Direction::NONE, p);
 	}
 
+	// Tracking maximum speed in velocity field.
+	max_squared_speed = 0;
+	num_t squared_speed;
+
 	const num_t vel_coef = .5/dx * dt/fluid_density;
 	FOR_EACH_COMPUTABLE_CELL(u){
 		u(i,j,k) -= (p(i+1,j,k) - p(i-1,j,k)) * vel_coef;
 		v(i,j,k) -= (p(i,j+1,k) - p(i,j-1,k)) * vel_coef;
 		w(i,j,k) -= (p(i,j,k+1) - p(i,j,k-1)) * vel_coef;
+
+		// Update maximum speed.
+		squared_speed = squared(u(i,j,k)) + squared(v(i,j,k)) + squared(w(i,j,k));
+		if(squared_speed > max_squared_speed)
+			max_squared_speed = squared_speed;
 	}END_FOR
 	enforceBoundary(Direction::X, u);
 	enforceBoundary(Direction::Y, v);

@@ -41,6 +41,7 @@ void ofApp::update(){
 
 	stringstream windowTitleStream;
 	windowTitleStream << "Smoke sim\tFPS " << fixed << setprecision(2) << ofGetFrameRate();
+	windowTitleStream << " | delta-t < " << smokeSolver.getThresholdDt();
 	ofSetWindowTitle(windowTitleStream.str());
 }
 
