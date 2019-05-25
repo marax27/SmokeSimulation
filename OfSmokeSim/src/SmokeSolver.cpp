@@ -17,7 +17,8 @@ SmokeSolver::SmokeSolver(int X, int Y, int Z)
 	: BaseSmokeSolver(X+2,Y+2,Z+2),
 	u(X+2,Y+2,Z+2), v(X+2,Y+2,Z+2), w(X+2,Y+2,Z+2), p(X+2,Y+2,Z+2),
 	utmp(X+2,Y+2,Z+2), vtmp(X+2,Y+2,Z+2), wtmp(X+2,Y+2,Z+2),
-	diverg(X+2,Y+2,Z+2)
+	diverg(X+2,Y+2,Z+2),
+	T(X+2,Y+2,Z+2), Ttmp(X+2,Y+2,Z+2)
 	// Staggered
 	/* : BaseSmokeSolver(X+1,Y+1,Z+1),
 	   u(X, Y+1, Z+1), v(X+1, Y, Z+1), w(X+1, Y+1, Z), p(X+1, Y+1, Z+1),
@@ -52,7 +53,8 @@ void SmokeSolver::generateSmoke(){
 		for (int j = 1; j < d.ZLast(); ++j) {
 			if (squared(i-centerY) + squared(j-centerZ) < squared(N/10)) {
 				d(5,i,j) = source_density;
-				u(5,i,j) = 12.0f;
+				u(5,i,j) = 5.0;
+				T(5,i,j) = 30;
 			}
 		}
 	}
@@ -83,6 +85,13 @@ void SmokeSolver::densityStep(){
 	dtmp.swapWith(d);
 	advect(Direction::NONE, d, dtmp, u, v, w);
 
+
+	Ttmp.swapWith(T);
+	diffuse(Direction::NONE, T, Ttmp, smoke_diffusion_coefficient);
+
+	Ttmp.swapWith(T);
+	advect(Direction::NONE, T, Ttmp, u, v, w);
+
 	FOR_EACH_COMPUTABLE_CELL(d){
 		d(i,j,k) -= .001;
 		if(d(i,j,k) < 0)
@@ -94,7 +103,7 @@ void SmokeSolver::addBuoyancy(){
 	FOR_EACH_COMPUTABLE_CELL(v){
 		auto dens = d(i,j,k);
 		if(dens > density_threshold)
-			v(i,j,k) += dt * (k_rise * (1.0/dens - 1.0/fluid_density) - k_fall * dens);
+			v(i,j,k) += dt * (k_rise * T(i,j,k) - k_fall * dens);
 	}END_FOR
 }
 

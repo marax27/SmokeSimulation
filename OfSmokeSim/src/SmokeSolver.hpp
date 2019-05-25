@@ -11,10 +11,13 @@ public:
 
 	num_t getThresholdDt(bool fedkiw_relaxation = false) const;
 
+	const Field3D& getTemperatureField() const { return T; }
+
 private:
 	Field3D u, v, w, p;
 	Field3D utmp, vtmp, wtmp;
 	Field3D diverg;
+	Field3D T, Ttmp;
 
 	num_t max_squared_speed;
 
