@@ -54,7 +54,7 @@ void SmokeSolver::generateSmoke(){
 			if (squared(i-centerY) + squared(j-centerZ) < squared(N/10)) {
 				d(5,i,j) = source_density;
 				u(5,i,j) = 5.0;
-				T(5,i,j) = 30;
+				T(5,i,j) = 80;
 			}
 		}
 	}
@@ -93,7 +93,7 @@ void SmokeSolver::densityStep(){
 	advect(Direction::NONE, T, Ttmp, u, v, w);
 
 	FOR_EACH_COMPUTABLE_CELL(d){
-		d(i,j,k) -= .001;
+		d(i,j,k) -= .0001;
 		if(d(i,j,k) < 0)
 			d(i,j,k) = 0;
 	}END_FOR
