@@ -164,36 +164,35 @@ void SmokeSolver::project(){
 }
 
 void SmokeSolver::advect(Direction dir, Field3D &field, Field3D &field_tmp, Field3D &velX, Field3D &velY, Field3D &velZ){
-	int i0, j0, i1, j1, k0, k1;
-	num_t x_prev, y_prev, z_prev;
+	idx3d idx0, idx1;
+	num3d current_pos, previous_pos;
 	num_t sx0, sx1, sy0, sy1, sz0, sz1, coef0, coef1;
 
-	const int NX = field.XSize()-2, NY = field.YSize()-2, NZ = field.ZSize()-2;
+	const int CCx = field.XSize()-2, CCy = field.YSize()-2, CCz = field.ZSize()-2;
 
 	FOR_EACH_COMPUTABLE_CELL(field){
-		x_prev = i*dx - dt*velX(i,j,k);
-		y_prev = j*dx - dt*velY(i,j,k);
-		z_prev = k*dx - dt*velZ(i,j,k);
+		current_pos = ijk2RealPos({i,j,k});
+		previous_pos = current_pos - num3d(velX(i,j,k), velY(i,j,k), velZ(i,j,k))*dt;
 
-		if(x_prev < .5)          x_prev = .5;
-		if(x_prev > NX*dx + .5)  x_prev = NX*dx + .5;
-		if(y_prev < .5)          y_prev = .5;
-		if(y_prev > NY*dx + .5)  y_prev = NY*dx + .5;
-		if(z_prev < .5)          z_prev = .5;
-		if(z_prev > NZ*dx + .5)  z_prev = NZ*dx + .5;
+		if(previous_pos.x < .5)          previous_pos.x = .5;
+		if(previous_pos.x > CCx*dx + .5)  previous_pos.x = CCx*dx + .5;
+		if(previous_pos.y < .5)          previous_pos.y = .5;
+		if(previous_pos.y > CCy*dx + .5)  previous_pos.y = CCy*dx + .5;
+		if(previous_pos.z < .5)          previous_pos.z = .5;
+		if(previous_pos.z > CCz*dx + .5)  previous_pos.z = CCz*dx + .5;
 
-		i0 = clamp(0, NX, int(x_prev / dx));  i1 = i0+1;
-		j0 = clamp(0, NY, int(y_prev / dx));  j1 = j0+1;
-		k0 = clamp(0, NZ, int(z_prev / dx));  k1 = k0+1;
+		idx0.i = clamp(0, CCx, int(previous_pos.x / dx));  idx1.i = idx0.i+1;
+		idx0.j = clamp(0, CCy, int(previous_pos.y / dx));  idx1.j = idx0.j+1;
+		idx0.k = clamp(0, CCz, int(previous_pos.z / dx));  idx1.k = idx0.k+1;
 
-		sx1 = x_prev - i0*dx;  sx0 = 1 - sx1;
-		sy1 = y_prev - j0*dx;  sy0 = 1 - sy1;
-		sz1 = z_prev - k0*dx;  sz0 = 1 - sz1;
+		sx1 = previous_pos.x - idx0.i*dx;  sx0 = 1 - sx1;
+		sy1 = previous_pos.y - idx0.j*dx;  sy0 = 1 - sy1;
+		sz1 = previous_pos.z - idx0.k*dx;  sz0 = 1 - sz1;
 
-		coef0 = sx0 * ( sy0*field_tmp(i0,j0,k0) + sy1*field_tmp(i0,j1,k0) ) +
-		        sx1 * ( sy0*field_tmp(i1,j0,k0) + sy1*field_tmp(i1,j1,k0) );
-		coef1 = sx0 * ( sy0*field_tmp(i0,j0,k1) + sy1*field_tmp(i0,j1,k1) ) +
-		        sx1 * ( sy0*field_tmp(i1,j0,k1) + sy1*field_tmp(i1,j1,k1) );
+		coef0 = sx0 * ( sy0*field_tmp(idx0.i,idx0.j,idx0.k) + sy1*field_tmp(idx0.i,idx1.j,idx0.k) ) +
+		        sx1 * ( sy0*field_tmp(idx1.i,idx0.j,idx0.k) + sy1*field_tmp(idx1.i,idx1.j,idx0.k) );
+		coef1 = sx0 * ( sy0*field_tmp(idx0.i,idx0.j,idx1.k) + sy1*field_tmp(idx0.i,idx1.j,idx1.k) ) +
+		        sx1 * ( sy0*field_tmp(idx1.i,idx0.j,idx1.k) + sy1*field_tmp(idx1.i,idx1.j,idx1.k) );
 		field(i,j,k) = sz0*coef0 + sz1*coef1;
 	}END_FOR
 	enforceBoundary(dir, d);
