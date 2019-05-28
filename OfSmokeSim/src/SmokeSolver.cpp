@@ -3,6 +3,8 @@
 
 #include "SmokeSolver.hpp"
 
+// A few helpful defines.
+
 #define FOR_EACH_COMPUTABLE_CELL(field)             \
 	for(int i = 1; i < field.XLast(); ++i){         \
 		for(int j = 1; j < field.YLast(); ++j){     \
@@ -13,16 +15,12 @@
 
 
 SmokeSolver::SmokeSolver(int X, int Y, int Z)
-	// Collocated
+	// Collocated grid
 	: BaseSmokeSolver(X+2,Y+2,Z+2),
-	u(X+2,Y+2,Z+2), v(X+2,Y+2,Z+2), w(X+2,Y+2,Z+2), p(X+2,Y+2,Z+2),
-	utmp(X+2,Y+2,Z+2), vtmp(X+2,Y+2,Z+2), wtmp(X+2,Y+2,Z+2),
-	diverg(X+2,Y+2,Z+2),
-	T(X+2,Y+2,Z+2), Ttmp(X+2,Y+2,Z+2)
-	// Staggered
-	/* : BaseSmokeSolver(X+1,Y+1,Z+1),
-	   u(X, Y+1, Z+1), v(X+1, Y, Z+1), w(X+1, Y+1, Z), p(X+1, Y+1, Z+1),
-	   utmp(X, Y+1, Z+1), vtmp(X+1, Y, Z+1), wtmp(X+1, Y+1, Z) */
+	  u(X+2,Y+2,Z+2), v(X+2,Y+2,Z+2), w(X+2,Y+2,Z+2), p(X+2,Y+2,Z+2),
+	  utmp(X+2,Y+2,Z+2), vtmp(X+2,Y+2,Z+2), wtmp(X+2,Y+2,Z+2),
+	  diverg(X+2,Y+2,Z+2),
+	  T(X+2,Y+2,Z+2), Ttmp(X+2,Y+2,Z+2)
  	{}
 
 //************************************************************
@@ -61,10 +59,9 @@ void SmokeSolver::generateSmoke(){
 }
 
 void SmokeSolver::velocityStep(){
+	// Add forces.
 	addBuoyancy();
-#warning Wind disabled.
-	// addWind();
-
+	addWind();
 	addVorticityConfinement();
 
 	utmp.swapWith(u);  vtmp.swapWith(v);  wtmp.swapWith(w);
@@ -110,14 +107,18 @@ void SmokeSolver::addBuoyancy(){
 }
 
 void SmokeSolver::addWind(){
-	const num_t coef = 0.75 * dt;
+	const num_t coef = k_wind * dt;
+	const num_t _1_coef = 1 - coef;
+
 	FOR_EACH_COMPUTABLE_CELL(u){  //assumption: dim u = dim v = dim w
-		u(i,j,k) *= 1 - coef;
-		v(i,j,k) *= 1 - coef;
-		
-		w(i,j,k) *= 1 - coef;
-		w(i,j,k) += coef * 10;
+		u(i,j,k) = _1_coef * u(i,j,k) + coef * wind_velocity.x;
+		v(i,j,k) = _1_coef * v(i,j,k) + coef * wind_velocity.y;
+		w(i,j,k) = _1_coef * w(i,j,k) + coef * wind_velocity.z;
 	}END_FOR
+
+	enforceBoundary(Direction::X, u);
+	enforceBoundary(Direction::Y, v);
+	enforceBoundary(Direction::Z, w);
 }
 
 void SmokeSolver::addVorticityConfinement(){

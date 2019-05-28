@@ -15,16 +15,18 @@ void ofApp::setup() {
 	ofSetFrameRate(fps);
 	ofBackground(0, 0, 0);
 
-	smokeSolver.setDt(0.05)
-	           .setDx(dx)
-	           .setKinematicViscosity(0)
-	           .setFluidDensity(1)
-	           .setFallCoefficient(0.00075)
-	           .setRiseCoefficient(4)
-	           .setSmokeDiffusionCoefficient(1e-5)
-	           .setDensityThreshold(0.00)
-	           .setVorticityConfinementCoefficient(5)
-			   .setDensityDecay(.00001);
+	smokeSolver.setDt(0.05);
+	smokeSolver.setDx(dx);
+	smokeSolver.setKinematicViscosity(0);
+	smokeSolver.setFluidDensity(1);
+	smokeSolver.setFallCoefficient(0.00075);
+	smokeSolver.setRiseCoefficient(4);
+	smokeSolver.setSmokeDiffusionCoefficient(1e-5);
+	smokeSolver.setDensityThreshold(0.00);
+	smokeSolver.setVorticityConfinementCoefficient(5);
+	smokeSolver.setDensityDecay(.00001);
+	smokeSolver.setWindCoefficient(.75);
+	smokeSolver.setWindVelocity({1.5, 0, 0});
 
 	cam.disableMouseInput();
 	shader.load("smokeShader");
