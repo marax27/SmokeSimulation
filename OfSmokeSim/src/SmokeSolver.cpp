@@ -65,6 +65,8 @@ void SmokeSolver::velocityStep(){
 #warning Wind disabled.
 	// addWind();
 
+	addVorticityConfinement();
+
 	utmp.swapWith(u);  vtmp.swapWith(v);  wtmp.swapWith(w);
 	diffuse(Direction::X, u, utmp, kinematic_viscosity);
 	diffuse(Direction::Y, v, vtmp, kinematic_viscosity);
@@ -93,7 +95,7 @@ void SmokeSolver::densityStep(){
 	advect(Direction::NONE, T, Ttmp, u, v, w);
 
 	FOR_EACH_COMPUTABLE_CELL(d){
-		d(i,j,k) -= .0001;
+		d(i,j,k) -= .00001;
 		if(d(i,j,k) < 0)
 			d(i,j,k) = 0;
 	}END_FOR
@@ -116,6 +118,44 @@ void SmokeSolver::addWind(){
 		w(i,j,k) *= 1 - coef;
 		w(i,j,k) += coef * 10;
 	}END_FOR
+}
+
+void SmokeSolver::addVorticityConfinement(){
+	//temp buffers
+	Field3D &curlX = utmp, &curlY = vtmp, &curlZ = wtmp, &curl = dtmp;
+	float dt0 = dt * vort_conf_coef;
+
+	FOR_EACH_COMPUTABLE_CELL(u) {
+		// curlx = dw/dy - dv/dz
+		curlX(i,j,k) = (w(i,j+1,k) - w(i,j-1,k)) * 0.5f -
+			(v(i,j,k+1) - v(i,j,k-1)) * 0.5f;
+
+		// curly = du/dz - dw/dx
+		curlY(i,j,k) = (u(i,j,k+1) - u(i,j,k-1)) * 0.5f -
+			(w(i+1,j,k) - w(i-1,j,k)) * 0.5f;
+
+		// curlz = dv/dx - du/dy
+		curlZ(i,j,k) = (v(i+1,j,k) - v(i-1,j,k)) * 0.5f -
+			(u(i,j+1,k) - u(i,j-1,k)) * 0.5f;
+
+		// curl = |curl|
+		curl(i,j,k) = sqrtf(curlX(i,j,k)*curlX(i,j,k) +
+				curlY(i,j,k)*curlY(i,j,k) +
+				curlZ(i,j,k)*curlZ(i,j,k));
+	} END_FOR
+
+	FOR_EACH_COMPUTABLE_CELL(u) {
+		float nX = (curl(i+1,j,k) - curl(i-1,j,k)) * 0.5f;
+		float nY = (curl(i,j+1,k) - curl(i,j-1,k)) * 0.5f;
+		float nZ = (curl(i,j,k+1) - curl(i,j,k-1)) * 0.5f;
+		float len1 = 1.0f/(sqrtf(nX*nX+nY*nY+nZ*nZ)+0.0000001f);
+		nX *= len1;
+		nY *= len1;
+		nZ *= len1;
+		u(i,j,k) += (nY*curlZ(i,j,k) - nZ*curlY(i,j,k)) * dt0;
+		v(i,j,k) += (nZ*curlX(i,j,k) - nX*curlZ(i,j,k)) * dt0;
+		w(i,j,k) += (nX*curlY(i,j,k) - nY*curlX(i,j,k)) * dt0;
+	} END_FOR
 }
 
 void SmokeSolver::project(){

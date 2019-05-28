@@ -28,6 +28,8 @@ private:
 
 	void addBuoyancy();
 	void addWind();
+	void addVorticityConfinement();
+
 	void project();
 
 	enum Direction{ NONE, X, Y, Z };

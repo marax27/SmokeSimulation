@@ -63,6 +63,12 @@ public:
 		return *this;
 	}
 
+	BaseSmokeSolver& setVorticityConfinementCoefficient(num_t coef){
+		if(coef <= 0.0)  throw std::invalid_argument("Vorticity confinement coefficient must be positive.");
+		this->vort_conf_coef = coef;
+		return *this;
+	}
+
 	// Getters.
 
 	num_t getDt() const { return dt; }
@@ -73,6 +79,7 @@ public:
 	num_t getRiseCoefficient() const { return k_rise; }
 	num_t getSmokeDiffusionCoefficient() const { return smoke_diffusion_coefficient; }
 	num_t getDensityThreshold() const { return density_threshold; }
+	num_t getVorticityConfinementCoefficient() const { return vort_conf_coef; }
 
 	// Perform single simulation step.
 	virtual void update() = 0;
@@ -97,4 +104,6 @@ protected:
 
 	// Delta-x = Delta-y = Delta-z
 	num_t dx;
+
+	num_t vort_conf_coef;
 };

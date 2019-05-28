@@ -22,7 +22,8 @@ void ofApp::setup() {
 	           .setFallCoefficient(0.00075)
 	           .setRiseCoefficient(0.01)
 	           .setSmokeDiffusionCoefficient(1e-3)
-	           .setDensityThreshold(0.001);
+	           .setDensityThreshold(0.001)
+	           .setVorticityConfinementCoefficient(2.5);
 
 	cam.disableMouseInput();
 	shader.load("smokeShader");
