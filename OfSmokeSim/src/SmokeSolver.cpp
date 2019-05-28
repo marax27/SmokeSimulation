@@ -95,7 +95,7 @@ void SmokeSolver::densityStep(){
 	advect(Direction::NONE, T, Ttmp, u, v, w);
 
 	FOR_EACH_COMPUTABLE_CELL(d){
-		d(i,j,k) -= .00001;
+		d(i,j,k) -= density_decay;
 		if(d(i,j,k) < 0)
 			d(i,j,k) = 0;
 	}END_FOR

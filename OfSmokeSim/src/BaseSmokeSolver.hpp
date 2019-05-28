@@ -69,6 +69,12 @@ public:
 		return *this;
 	}
 
+	BaseSmokeSolver& setDensityDecay(num_t density_decay){
+		if(density_decay < 0.0)  throw std::invalid_argument("Density decay must not be negative.");
+		this->density_decay = density_decay;
+		return *this;
+	}
+
 	// Getters.
 
 	num_t getDt() const { return dt; }
@@ -80,6 +86,7 @@ public:
 	num_t getSmokeDiffusionCoefficient() const { return smoke_diffusion_coefficient; }
 	num_t getDensityThreshold() const { return density_threshold; }
 	num_t getVorticityConfinementCoefficient() const { return vort_conf_coef; }
+	num_t getDensityDecay() const { return density_decay; }
 
 	// Perform single simulation step.
 	virtual void update() = 0;
@@ -106,4 +113,6 @@ protected:
 	num_t dx;
 
 	num_t vort_conf_coef;
+
+	num_t density_decay;
 };

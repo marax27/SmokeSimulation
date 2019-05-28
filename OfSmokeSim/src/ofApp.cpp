@@ -15,15 +15,16 @@ void ofApp::setup() {
 	ofSetFrameRate(fps);
 	ofBackground(0, 0, 0);
 
-	smokeSolver.setDt(0.1)
+	smokeSolver.setDt(0.05)
 	           .setDx(dx)
-	           .setKinematicViscosity(1e-5)
+	           .setKinematicViscosity(0)
 	           .setFluidDensity(1)
 	           .setFallCoefficient(0.00075)
-	           .setRiseCoefficient(0.01)
-	           .setSmokeDiffusionCoefficient(1e-3)
-	           .setDensityThreshold(0.001)
-	           .setVorticityConfinementCoefficient(2.5);
+	           .setRiseCoefficient(4)
+	           .setSmokeDiffusionCoefficient(1e-5)
+	           .setDensityThreshold(0.00)
+	           .setVorticityConfinementCoefficient(5)
+			   .setDensityDecay(.00001);
 
 	cam.disableMouseInput();
 	shader.load("smokeShader");
@@ -42,7 +43,7 @@ void ofApp::update(){
 
 	stringstream windowTitleStream;
 	windowTitleStream << "Smoke sim\tFPS " << fixed << setprecision(2) << ofGetFrameRate();
-	windowTitleStream << " | delta-t < " << smokeSolver.getThresholdDt();
+	windowTitleStream << " | delta-t < " << smokeSolver.getThresholdDt(true);
 	ofSetWindowTitle(windowTitleStream.str());
 }
 

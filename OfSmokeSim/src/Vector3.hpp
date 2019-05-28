@@ -2,10 +2,12 @@
 
 #include "base.hpp"
 
+// A simple container for 3 indices.
 struct idx3d{
 	int i, j, k;
 };
 
+// 3-dimensional vector.
 struct num3d{
 	num3d() = default;
 	num3d(num_t x, num_t y, num_t z) : x(x), y(y), z(z) {}
