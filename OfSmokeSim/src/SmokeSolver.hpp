@@ -13,7 +13,7 @@ public:
 
 	const Field3D& getTemperatureField() const { return T; }
 
-private:
+protected:
 	Field3D u, v, w, p;
 	Field3D utmp, vtmp, wtmp;
 	Field3D diverg;
