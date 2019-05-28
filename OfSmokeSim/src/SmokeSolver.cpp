@@ -49,12 +49,12 @@ void SmokeSolver::generateSmoke(){
 	const int centerZ = p.ZLast() / 2;
 	float source_density = (rand()%1000)/1000.0f;
 
-	for (int i = 1; i < d.YLast(); ++i) {
-		for (int j = 1; j < d.ZLast(); ++j) {
-			if (squared(i-centerY) + squared(j-centerZ) < squared(N/10)) {
-				d(5,i,j) = source_density;
-				u(5,i,j) = 5.0;
-				T(5,i,j) = 80;
+	for (int j = 1; j < d.YLast(); ++j) {
+		for (int k = 1; k < d.ZLast(); ++k) {
+			if (squared(j-centerY) + squared(k-centerZ) < squared(N/10)) {
+				d(5,j,k) = source_density;
+				u(5,j,k) = 5.0;
+				T(5,j,k) = 100;
 			}
 		}
 	}
@@ -166,7 +166,8 @@ void SmokeSolver::project(){
 void SmokeSolver::advect(Direction dir, Field3D &field, Field3D &field_tmp, Field3D &velX, Field3D &velY, Field3D &velZ){
 	idx3d idx0, idx1;
 	num3d current_pos, previous_pos;
-	num_t sx0, sx1, sy0, sy1, sz0, sz1, coef0, coef1;
+	num3d s0, s1;
+	num_t coef0, coef1;
 
 	const int CCx = field.XSize()-2, CCy = field.YSize()-2, CCz = field.ZSize()-2;
 
@@ -185,15 +186,14 @@ void SmokeSolver::advect(Direction dir, Field3D &field, Field3D &field_tmp, Fiel
 		idx0.j = clamp(0, CCy, int(previous_pos.y / dx));  idx1.j = idx0.j+1;
 		idx0.k = clamp(0, CCz, int(previous_pos.z / dx));  idx1.k = idx0.k+1;
 
-		sx1 = previous_pos.x - idx0.i*dx;  sx0 = 1 - sx1;
-		sy1 = previous_pos.y - idx0.j*dx;  sy0 = 1 - sy1;
-		sz1 = previous_pos.z - idx0.k*dx;  sz0 = 1 - sz1;
+		s1 = (previous_pos - num3d(idx0.i, idx0.j, idx0.k) * dx) / dx;
+		s0 = num3d(1,1,1) - s1;
 
-		coef0 = sx0 * ( sy0*field_tmp(idx0.i,idx0.j,idx0.k) + sy1*field_tmp(idx0.i,idx1.j,idx0.k) ) +
-		        sx1 * ( sy0*field_tmp(idx1.i,idx0.j,idx0.k) + sy1*field_tmp(idx1.i,idx1.j,idx0.k) );
-		coef1 = sx0 * ( sy0*field_tmp(idx0.i,idx0.j,idx1.k) + sy1*field_tmp(idx0.i,idx1.j,idx1.k) ) +
-		        sx1 * ( sy0*field_tmp(idx1.i,idx0.j,idx1.k) + sy1*field_tmp(idx1.i,idx1.j,idx1.k) );
-		field(i,j,k) = sz0*coef0 + sz1*coef1;
+		coef0 = s0.x * ( s0.y*field_tmp(idx0.i,idx0.j,idx0.k) + s1.y*field_tmp(idx0.i,idx1.j,idx0.k) ) +
+		        s1.x * ( s0.y*field_tmp(idx1.i,idx0.j,idx0.k) + s1.y*field_tmp(idx1.i,idx1.j,idx0.k) );
+		coef1 = s0.x * ( s0.y*field_tmp(idx0.i,idx0.j,idx1.k) + s1.y*field_tmp(idx0.i,idx1.j,idx1.k) ) +
+		        s1.x * ( s0.y*field_tmp(idx1.i,idx0.j,idx1.k) + s1.y*field_tmp(idx1.i,idx1.j,idx1.k) );
+		field(i,j,k) = s0.z*coef0 + s1.z*coef1;
 	}END_FOR
 	enforceBoundary(dir, d);
 }
