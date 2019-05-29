@@ -44,7 +44,7 @@ public:
 	}
 
 	void setVorticityConfinementCoefficient(num_t coef){
-		if(coef <= 0.0)  throw std::invalid_argument("Vorticity confinement coefficient must be positive.");
+		if(coef < 0.0)  throw std::invalid_argument("Vorticity confinement coefficient must be positive.");
 		this->vort_conf_coef = coef;
 	}
 
