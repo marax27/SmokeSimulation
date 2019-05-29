@@ -51,7 +51,7 @@ void SmokeSolver::generateSmoke(){
 		for (int k = 1; k < d.ZLast(); ++k) {
 			if (squared(j-centerY) + squared(k-centerZ) < squared(N/10)) {
 				d(5,j,k) = source_density;
-				u(5,j,k) = 3.0;
+				u(5,j,k) = 5.0;
 				T(5,j,k) = 100;
 			}
 		}
@@ -59,10 +59,7 @@ void SmokeSolver::generateSmoke(){
 }
 
 void SmokeSolver::velocityStep(){
-	// Add forces.
-	addBuoyancy();
-	addWind();
-	addVorticityConfinement();
+	addForces();
 
 	utmp.swapWith(u);  vtmp.swapWith(v);  wtmp.swapWith(w);
 	diffuse(Direction::X, u, utmp, kinematic_viscosity);
@@ -77,9 +74,17 @@ void SmokeSolver::velocityStep(){
 	project();
 }
 
+void SmokeSolver::addForces(){
+	addBuoyancy();
+	if(k_wind)
+		addWind();
+	if(vort_conf_coef)
+		addVorticityConfinement();
+}
+
 void SmokeSolver::densityStep(){
 	// dtmp.swapWith(d);
-	// diffuse(Direction::NONE, d, dtmp, smoke_diffusion_coef);
+	// diffuse(Direction::NONE, d, dtmp, smoke_diffusion_coefficient);
 
 	dtmp.swapWith(d);
 	advect(Direction::NONE, d, dtmp, u, v, w);
@@ -101,7 +106,7 @@ void SmokeSolver::densityStep(){
 void SmokeSolver::addBuoyancy(){
 	FOR_EACH_COMPUTABLE_CELL(v){
 		auto dens = d(i,j,k);
-		if(dens > density_threshold)
+		if(dens)
 			v(i,j,k) += dt * (k_rise * T(i,j,k) - k_fall * dens);
 	}END_FOR
 }
@@ -122,22 +127,24 @@ void SmokeSolver::addWind(){
 }
 
 void SmokeSolver::addVorticityConfinement(){
-	//temp buffers
+	// Use temporary velocity buffers to store curl values.
 	Field3D &curlX = utmp, &curlY = vtmp, &curlZ = wtmp, &curl = dtmp;
-	float dt0 = dt * vort_conf_coef;
+	float coef = dt * vort_conf_coef;
+
+	const num_t C = 1.0 / (2 * dx);
 
 	FOR_EACH_COMPUTABLE_CELL(u) {
 		// curlx = dw/dy - dv/dz
-		curlX(i,j,k) = (w(i,j+1,k) - w(i,j-1,k)) * 0.5f -
-			(v(i,j,k+1) - v(i,j,k-1)) * 0.5f;
+		curlX(i,j,k) = (w(i,j+1,k) - w(i,j-1,k)) * C -
+			(v(i,j,k+1) - v(i,j,k-1)) * C;
 
 		// curly = du/dz - dw/dx
-		curlY(i,j,k) = (u(i,j,k+1) - u(i,j,k-1)) * 0.5f -
-			(w(i+1,j,k) - w(i-1,j,k)) * 0.5f;
+		curlY(i,j,k) = (u(i,j,k+1) - u(i,j,k-1)) * C -
+			(w(i+1,j,k) - w(i-1,j,k)) * C;
 
 		// curlz = dv/dx - du/dy
-		curlZ(i,j,k) = (v(i+1,j,k) - v(i-1,j,k)) * 0.5f -
-			(u(i,j+1,k) - u(i,j-1,k)) * 0.5f;
+		curlZ(i,j,k) = (v(i+1,j,k) - v(i-1,j,k)) * C -
+			(u(i,j+1,k) - u(i,j-1,k)) * C;
 
 		// curl = |curl|
 		curl(i,j,k) = sqrtf(curlX(i,j,k)*curlX(i,j,k) +
@@ -153,9 +160,9 @@ void SmokeSolver::addVorticityConfinement(){
 		nX *= len1;
 		nY *= len1;
 		nZ *= len1;
-		u(i,j,k) += (nY*curlZ(i,j,k) - nZ*curlY(i,j,k)) * dt0;
-		v(i,j,k) += (nZ*curlX(i,j,k) - nX*curlZ(i,j,k)) * dt0;
-		w(i,j,k) += (nX*curlY(i,j,k) - nY*curlX(i,j,k)) * dt0;
+		u(i,j,k) += (nY*curlZ(i,j,k) - nZ*curlY(i,j,k)) * coef;
+		v(i,j,k) += (nZ*curlX(i,j,k) - nX*curlZ(i,j,k)) * coef;
+		w(i,j,k) += (nX*curlY(i,j,k) - nY*curlX(i,j,k)) * coef;
 	} END_FOR
 }
 

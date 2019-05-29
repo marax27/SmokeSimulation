@@ -33,15 +33,10 @@ public:
 		this->k_rise = k_rise;
 	}
 
-	void setSmokeDiffusionCoefficient(num_t coef){
-		if(coef < 0.0)  throw std::invalid_argument("Smoke diffusion coefficient must not be negative.");
-		this->smoke_diffusion_coefficient = coef;
-	}
-
-	void setDensityThreshold(num_t density_threshold){
-		if(density_threshold < 0.0)  throw std::invalid_argument("Density threshold must not be negative.");
-		this->density_threshold = density_threshold;
-	}
+	// void setSmokeDiffusionCoefficient(num_t coef){
+	// 	if(coef < 0.0)  throw std::invalid_argument("Smoke diffusion coefficient must not be negative.");
+	// 	this->smoke_diffusion_coefficient = coef;
+	// }
 
 	void setVorticityConfinementCoefficient(num_t coef){
 		if(coef < 0.0)  throw std::invalid_argument("Vorticity confinement coefficient must be positive.");
@@ -63,8 +58,7 @@ public:
 	num_t getFluidDensity() const { return fluid_density; }
 	num_t getFallCoefficient() const { return k_fall; }
 	num_t getRiseCoefficient() const { return k_rise; }
-	num_t getSmokeDiffusionCoefficient() const { return smoke_diffusion_coefficient; }
-	num_t getDensityThreshold() const { return density_threshold; }
+	// num_t getSmokeDiffusionCoefficient() const { return smoke_diffusion_coefficient; }
 	num_t getVorticityConfinementCoefficient() const { return vort_conf_coef; }
 	num3d getWindVelocity() const { return wind_velocity; }
 	num_t getWindCoefficient() const { return k_wind; }
@@ -83,6 +77,8 @@ protected:
 
 	void velocityStep();
 	void densityStep();
+
+	void addForces();
 
 	void addBuoyancy();
 	void addWind();
@@ -113,7 +109,7 @@ protected:
 	num_t kinematic_viscosity, fluid_density;
 
 	// Smoke density parameters.
-	num_t smoke_diffusion_coefficient, density_threshold;
+	// num_t smoke_diffusion_coefficient;
 
 	// Buyoancy coefficients.
 	num_t k_fall, k_rise;
