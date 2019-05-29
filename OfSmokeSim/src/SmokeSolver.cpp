@@ -16,11 +16,11 @@
 
 SmokeSolver::SmokeSolver(int X, int Y, int Z)
 	// Collocated grid
-	: BaseSmokeSolver(X+2,Y+2,Z+2),
-	  u(X+2,Y+2,Z+2), v(X+2,Y+2,Z+2), w(X+2,Y+2,Z+2), p(X+2,Y+2,Z+2),
-	  utmp(X+2,Y+2,Z+2), vtmp(X+2,Y+2,Z+2), wtmp(X+2,Y+2,Z+2),
-	  diverg(X+2,Y+2,Z+2),
-	  T(X+2,Y+2,Z+2), Ttmp(X+2,Y+2,Z+2)
+	: BaseSmokeSolver(X+3,Y+3,Z+3),
+	  u(X+3,Y+3,Z+3), v(X+3,Y+3,Z+3), w(X+3,Y+3,Z+3), p(X+3,Y+3,Z+3),
+	  utmp(X+3,Y+3,Z+3), vtmp(X+3,Y+3,Z+3), wtmp(X+3,Y+3,Z+3),
+	  diverg(X+3,Y+3,Z+3),
+	  T(X+3,Y+3,Z+3), Ttmp(X+3,Y+3,Z+3)
  	{}
 
 //************************************************************
@@ -51,7 +51,7 @@ void SmokeSolver::generateSmoke(){
 		for (int k = 1; k < d.ZLast(); ++k) {
 			if (squared(j-centerY) + squared(k-centerZ) < squared(N/10)) {
 				d(5,j,k) = source_density;
-				u(5,j,k) = 5.0;
+				u(5,j,k) = 3.0;
 				T(5,j,k) = 100;
 			}
 		}
@@ -78,15 +78,15 @@ void SmokeSolver::velocityStep(){
 }
 
 void SmokeSolver::densityStep(){
-	dtmp.swapWith(d);
-	diffuse(Direction::NONE, d, dtmp, smoke_diffusion_coefficient);
+	// dtmp.swapWith(d);
+	// diffuse(Direction::NONE, d, dtmp, smoke_diffusion_coef);
 
 	dtmp.swapWith(d);
 	advect(Direction::NONE, d, dtmp, u, v, w);
 
 
-	Ttmp.swapWith(T);
-	diffuse(Direction::NONE, T, Ttmp, smoke_diffusion_coefficient);
+	// Ttmp.swapWith(T);
+	// diffuse(Direction::NONE, T, Ttmp, smoke_diffusion_coefficient);
 
 	Ttmp.swapWith(T);
 	advect(Direction::NONE, T, Ttmp, u, v, w);

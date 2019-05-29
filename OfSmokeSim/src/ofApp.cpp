@@ -15,17 +15,17 @@ void ofApp::setup() {
 	ofSetFrameRate(fps);
 	ofBackground(0, 0, 0);
 
-	smokeSolver.setDt(0.05);
+	smokeSolver.setDt(0.15);
 	smokeSolver.setDx(dx);
 	smokeSolver.setKinematicViscosity(0);
 	smokeSolver.setFluidDensity(1);
 	smokeSolver.setFallCoefficient(0.00075);
-	smokeSolver.setRiseCoefficient(4);
+	smokeSolver.setRiseCoefficient(0.14);
 	smokeSolver.setSmokeDiffusionCoefficient(1e-5);
-	smokeSolver.setDensityThreshold(0.00);
+	smokeSolver.setDensityThreshold(0.0001);
 	smokeSolver.setVorticityConfinementCoefficient(5);
 	smokeSolver.setDensityDecay(.00001);
-	smokeSolver.setWindCoefficient(.75);
+	smokeSolver.setWindCoefficient(0);
 	smokeSolver.setWindVelocity({1.5, 0, 0});
 
 	cam.disableMouseInput();
@@ -157,7 +157,9 @@ void ofApp::drawSmoke(Field3D &field) {
 	for (int i = 1; i < field.XLast() - 1; ++i) {
 		for (int j = 1; j < field.YLast() - 1; ++j) {
 			for (int k = 1; k < field.ZLast() - 1; ++k) {
-				density = field(i, j, k);
+				density = ( field(i,j,k) + field(i+1,j,k) + field(i,j+1,k) +
+				            field(i,j,k+1) + field(i+1,j+1,k) + field(i+1,j,k+1) +
+							field(i,j+1,k+1) + field(i+1,j+1,k+1) ) / 8.0;
 				if (density != 0) {
 					density = density >= 1 ? 1.0f : density;
 					shader.setUniform1f("alpha", alpha0 + (1 - alpha0) * density);
