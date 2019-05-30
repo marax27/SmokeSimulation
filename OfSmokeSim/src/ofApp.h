@@ -3,6 +3,9 @@
 #include "ofMain.h"
 #include "SmokeSolver.hpp"
 #include "BoundaryBox.hpp"
+#include "SmokeDataLoader.hpp"
+
+#include <string>
 
 /*
 	To create a mp4 file from screenshots: 
@@ -17,6 +20,9 @@
 class ofApp : public ofBaseApp{
 
 	public:
+		ofApp(const std::string &config_filename)
+			: smoke_data_loader(SmokeDataLoader(config_filename)) {}
+
 		void setup();
 		void update();
 		void draw();
@@ -44,4 +50,7 @@ class ofApp : public ofBaseApp{
 		float cameraOrbitLatitude = -10.0f;
 		float cameraOrbitRadius;
 		float currentCameraLongitude = 0.0f;
+	
+	private:
+		SmokeDataLoader smoke_data_loader;
 };

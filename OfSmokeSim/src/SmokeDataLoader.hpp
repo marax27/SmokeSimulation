@@ -1,4 +1,6 @@
-﻿#include <iostream>
+﻿#pragma once
+
+#include <iostream>
 #include <sstream>
 #include <fstream>
 #include "SmokeSolver.hpp"
@@ -10,9 +12,11 @@ class SmokeDataLoader {
 
 public:
 
-	SmokeDataLoader(){
-		std::ifstream is;
-		is.open("parameters.cfg");
+	SmokeDataLoader(const std::string &filename){
+		std::ifstream is(filename);
+		if(!is.good())
+			throw std::runtime_error("Failed to find a file: " + filename);
+		
 		// get length of file:
 		is.seekg(0, std::ios::end);
 		long length = is.tellg();
@@ -45,8 +49,6 @@ public:
 		smokeSolver.setFluidDensity(parameters.find("fd")->second);
 		smokeSolver.setFallCoefficient(parameters.find("fc")->second);
 		smokeSolver.setRiseCoefficient(parameters.find("rc")->second);
-		smokeSolver.setSmokeDiffusionCoefficient(parameters.find("sdc")->second);
-		smokeSolver.setDensityThreshold(parameters.find("dtr")->second);
 		smokeSolver.setVorticityConfinementCoefficient(parameters.find("vcc")->second);
 		smokeSolver.setDensityDecay(parameters.find("dd")->second);
 		smokeSolver.setWindCoefficient(parameters.find("wc")->second);

@@ -1,8 +1,9 @@
 #include "ofApp.h"
+#include "SmokeDataLoader.hpp"
 
 //--------------------------------------------------------------
 int x = 30, y = 30, z = 30;
-int fps = 4;
+int fps = 64;
 double dx = .5;
 
 bool saveFrames = false;
@@ -15,18 +16,7 @@ void ofApp::setup() {
 	ofSetFrameRate(fps);
 	ofBackground(0, 0, 0);
 
-	smokeSolver.setDt(0.15);
-	smokeSolver.setDx(dx);
-	smokeSolver.setKinematicViscosity(0);
-	smokeSolver.setFluidDensity(1);
-	smokeSolver.setFallCoefficient(0.00075);
-	smokeSolver.setRiseCoefficient(0.14);
-	smokeSolver.setSmokeDiffusionCoefficient(1e-5);
-	smokeSolver.setDensityThreshold(0.0001);
-	smokeSolver.setVorticityConfinementCoefficient(5);
-	smokeSolver.setDensityDecay(.00001);
-	smokeSolver.setWindCoefficient(0);
-	smokeSolver.setWindVelocity({1.5, 0, 0});
+	smoke_data_loader.loadData(smokeSolver);
 
 	cam.disableMouseInput();
 	shader.load("smokeShader");
