@@ -2,21 +2,29 @@
 #include "SmokeDataLoader.hpp"
 
 //--------------------------------------------------------------
-int x = 30, y = 30, z = 30;
-int fps = 64;
-double dx = .5;
 
-bool saveFrames = false;
-string framesDirPath = "";
+namespace{
+	int fps = 30;
 
-SmokeSolver smokeSolver(x, y, z);
-BoundaryBox boundaryBox(x * dx, y * dx, z * dx);
+	bool saveFrames = false;
+	string framesDirPath = "";
+
+	int x, y, z;
+	num_t dx;
+}
 
 void ofApp::setup() {
 	ofSetFrameRate(fps);
 	ofBackground(0, 0, 0);
 
-	smoke_data_loader.loadData(smokeSolver);
+	smoke_data_loader.loadData(smoke_solver);
+
+	dx = smoke_solver.getDx();
+	x = smoke_solver.getDensityField().XSize() - 3;
+	y = smoke_solver.getDensityField().YSize() - 3;
+	z = smoke_solver.getDensityField().ZSize() - 3;
+
+	boundary_box = BoundaryBox(x * dx, y * dx, z * dx);
 
 	cam.disableMouseInput();
 	shader.load("smokeShader");
@@ -31,23 +39,23 @@ void ofApp::setup() {
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	smokeSolver.update();
+	smoke_solver.update();
 
 	stringstream windowTitleStream;
 	windowTitleStream << "Smoke sim\tFPS " << fixed << setprecision(2) << ofGetFrameRate();
-	windowTitleStream << " | delta-t < " << smokeSolver.getThresholdDt(true);
+	windowTitleStream << " | delta-t < " << smoke_solver.getThresholdDt(true);
 	ofSetWindowTitle(windowTitleStream.str());
 }
 
 //--------------------------------------------------------------
 void ofApp::draw() {
-	auto field = smokeSolver.getDensityField();
+	auto field = smoke_solver.getDensityField();
 	
 	cam.begin();
 
 	cameraControl();
 
-	boundaryBox.draw();
+	boundary_box.draw();
 	
 	shader.begin();
 	drawSmoke(field);

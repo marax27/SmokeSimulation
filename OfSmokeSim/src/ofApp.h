@@ -20,8 +20,9 @@
 class ofApp : public ofBaseApp{
 
 	public:
-		ofApp(const std::string &config_filename)
-			: smoke_data_loader(SmokeDataLoader(config_filename)) {}
+		ofApp(const std::string &config_filename, int x, int y, int z)
+			: smoke_data_loader(SmokeDataLoader(config_filename)),
+			  smoke_solver(x,y,z) {}
 
 		void setup();
 		void update();
@@ -53,4 +54,8 @@ class ofApp : public ofBaseApp{
 	
 	private:
 		SmokeDataLoader smoke_data_loader;
+
+		SmokeSolver smoke_solver;
+		BoundaryBox boundary_box;
+
 };
